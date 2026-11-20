@@ -12,6 +12,20 @@
   animation: shake 0.45s ease-in-out both;
 }
 
+/* Toast notification */
+.toastIn {
+  animation: toastIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.toastOut {
+  animation: toastOut 0.2s ease-in both;
+}
+.toastBar {
+  transform-origin: left;
+  animation-name: toastBar;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
 /* Grouped fields with sliding accent bar (left edge) */
 .field {
   position: relative;
@@ -112,6 +126,18 @@
   40% { transform: translateX(6px); }
   60% { transform: translateX(-4px); }
   80% { transform: translateX(4px); }
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-8px) scale(0.98); }
+}
+@keyframes toastBar {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
 }
 @keyframes pop {
   from { opacity: 0; transform: scale(0.6); }

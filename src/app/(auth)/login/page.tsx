@@ -4,17 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, Check } from "lucide-react";
+import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, Check, X } from "lucide-react";
 import { LoginIllustration } from "@/components/auth/login-illustration";
 import s from "@/components/auth/auth.module.css";
 
 const REMEMBER_KEY = "login-remember-email";
 const delay = (sec: number) => ({ animationDelay: `${sec}s` });
+const TOAST_MS = 5000;
+
+type Toast = { id: number; title: string; message: string };
 
 export default function LoginPage() {
   const router = useRouter();
-  const [error, setError] = useState("");
-  const [errorKey, setErrorKey] = useState(0);
+  const [error, setError] = useState(false);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const [toastLeaving, setToastLeaving] = useState(false);
+  const toastTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
@@ -31,10 +36,31 @@ export default function LoginPage() {
     } catch {}
   }, []);
 
+  // Clear pending toast timers on unmount
+  useEffect(() => () => toastTimers.current.forEach(clearTimeout), []);
+
+  function clearToastTimers() {
+    toastTimers.current.forEach(clearTimeout);
+    toastTimers.current = [];
+  }
+
+  function dismissToast() {
+    clearToastTimers();
+    setToastLeaving(true);
+    toastTimers.current.push(setTimeout(() => setToast(null), 200));
+  }
+
+  function showToast(title: string, message: string) {
+    clearToastTimers();
+    setToastLeaving(false);
+    setToast({ id: Date.now(), title, message });
+    toastTimers.current.push(setTimeout(dismissToast, TOAST_MS));
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError(false);
 
     const formData = new FormData(e.currentTarget);
 
@@ -50,8 +76,8 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      setError("Invalid email or password");
-      setErrorKey((k) => k + 1);
+      setError(true);
+      showToast("Sign in failed", "The email or password you entered is incorrect.");
       setLoading(false);
     } else {
       router.push("/dashboard");
@@ -60,6 +86,42 @@ export default function LoginPage() {
 
   return (
     <div className={`${s.root} min-h-screen grid md:grid-cols-2 bg-card`}>
+      {/* ── Toast notification (top-right) ─────────── */}
+      <div
+        aria-live="assertive"
+        className="pointer-events-none fixed z-50 top-4 inset-x-4 sm:inset-x-auto sm:top-6 sm:right-6 sm:w-[360px]"
+      >
+        {toast && (
+          <div
+            key={toast.id}
+            role="alert"
+            className={`${toastLeaving ? s.toastOut : s.toastIn} pointer-events-auto relative overflow-hidden rounded-xl border border-border bg-card shadow-lg`}
+          >
+            <div className="flex items-start gap-3 p-4 pr-10">
+              <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                <AlertCircle className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[14px] font-semibold text-foreground">{toast.title}</p>
+                <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">{toast.message}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={dismissToast}
+              aria-label="Dismiss notification"
+              className="absolute right-2.5 top-2.5 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div
+              className={`${s.toastBar} absolute bottom-0 left-0 h-[3px] w-full bg-rose-500/70`}
+              style={{ animationDuration: `${TOAST_MS}ms` }}
+            />
+          </div>
+        )}
+      </div>
+
       {/* ── Left: animation (top on mobile) ─────────── */}
       <div className="relative flex flex-col items-center justify-center bg-[#efe9fc] px-6 pt-8 pb-6 md:p-10">
         <LoginIllustration className="w-full max-w-[250px] sm:max-w-[340px] md:max-w-[520px] h-auto" />
@@ -90,19 +152,11 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-8">
-            {error && (
-              <div
-                key={errorKey}
-                role="alert"
-                className={`${s.shake} mb-4 bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-300 text-[13px] px-3.5 py-2.5 rounded-lg flex items-center gap-2`}
-              >
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                {error}
-              </div>
-            )}
-
             {/* Grouped fields */}
-            <div className={`${s.rise} rounded-xl border border-border bg-background/40 overflow-hidden shadow-sm`} style={delay(0.45)}>
+            <div
+              className={`${s.rise} rounded-xl border bg-background/40 overflow-hidden shadow-sm transition-colors ${error ? "border-rose-500/50" : "border-border"}`}
+              style={delay(0.45)}
+            >
               <div className={`${s.field} px-4 pt-2.5 pb-2 focus-within:bg-primary/[0.04]`}>
                 <label htmlFor="email" className="block text-[11px] font-medium text-muted-foreground">
                   Email address
@@ -114,6 +168,7 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   ref={emailRef}
+                  aria-invalid={error || undefined}
                   placeholder="you@company.com"
                   className="w-full bg-transparent text-[14px] font-medium text-foreground placeholder:text-muted-foreground/50 py-1 focus:outline-none"
                 />
@@ -130,6 +185,7 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     required
+                    aria-invalid={error || undefined}
                     placeholder="••••••••"
                     className="w-full bg-transparent text-[14px] font-medium text-foreground placeholder:text-muted-foreground/50 py-1 focus:outline-none"
                   />

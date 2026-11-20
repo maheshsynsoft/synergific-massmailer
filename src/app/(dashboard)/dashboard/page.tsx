@@ -376,7 +376,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── Overview panel ─────────────────────── */}
-      <section aria-label="Overview" className={cn("bg-secondary rounded-[20px] p-4 sm:p-6 space-y-7", styles.rise)}>
+      <section aria-label="Overview" className={cn("bg-secondary rounded-2xl p-4 sm:p-6 space-y-7", styles.rise)}>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <SearchTrigger />
           <div className="flex flex-wrap items-center gap-1">

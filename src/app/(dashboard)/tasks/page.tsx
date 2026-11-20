@@ -107,7 +107,7 @@ export default function TasksPage() {
                   <Label>Description</Label>
                   <Textarea name="description" rows={2} placeholder="Optional notes..." />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Priority</Label>
                     <Select name="priority" defaultValue="medium">
@@ -131,7 +131,7 @@ export default function TasksPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1000px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1000px]">
         {/* Filter tabs */}
         <div className="flex gap-px bg-muted rounded-md p-0.5 w-fit">
           {[

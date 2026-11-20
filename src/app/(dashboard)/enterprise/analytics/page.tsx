@@ -112,7 +112,7 @@ export default function AnalyticsPage() {
     return (
       <>
         <Header title="Analytics" subtitle="Loading insights..." />
-        <div className="p-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-32 bg-card rounded-xl border border-border/60 animate-pulse" />
           ))}
@@ -156,7 +156,7 @@ export default function AnalyticsPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1400px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1400px]">
         {/* ── KPI tiles ─────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiTile
@@ -407,7 +407,7 @@ export default function AnalyticsPage() {
                 data.charts.topContacts.map((c, i) => (
                   <div key={c.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-muted/40 transition-colors">
                     <span className="text-[10px] font-bold text-muted-foreground/60 nums-tabular w-4">{i + 1}</span>
-                    <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                    <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold flex-shrink-0">
                       {c.name[0]?.toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">

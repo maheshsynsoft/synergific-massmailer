@@ -247,7 +247,7 @@ export default function MassEmailPage() {
               className={cn(
                 "h-8 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold transition-all",
                 canSend
-                  ? "gradient-brand text-white shadow-glow hover:shadow-glow-strong"
+                  ? "bg-primary text-primary-foreground shadow-glow hover:shadow-glow-strong"
                   : "bg-muted text-muted-foreground cursor-not-allowed"
               )}
             >
@@ -312,7 +312,7 @@ export default function MassEmailPage() {
         </div>
       )}
 
-      <div className="p-8 grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-in max-w-[1500px]">
+      <div className="p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-in max-w-[1500px]">
         {/* ── LEFT: Templates ─────────── */}
         <div className="lg:col-span-3 bg-card rounded-xl border border-border/60 shadow-xs h-[calc(100vh-160px)] flex flex-col overflow-hidden">
           <div className="px-4 py-3 border-b border-border/60 flex items-center gap-2.5">
@@ -330,7 +330,7 @@ export default function MassEmailPage() {
               <button
                 onClick={loadSynergificTemplates}
                 disabled={seedingTemplates}
-                className="w-full h-8 px-3 rounded-md flex items-center justify-center gap-1.5 text-[12px] font-semibold gradient-brand text-white shadow-glow hover:shadow-glow-strong transition-all disabled:opacity-50"
+                className="w-full h-8 px-3 rounded-md flex items-center justify-center gap-1.5 text-[12px] font-semibold bg-primary text-primary-foreground shadow-glow hover:shadow-glow-strong transition-all disabled:opacity-50"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 {seedingTemplates ? "Loading..." : "Load templates"}
@@ -575,7 +575,7 @@ export default function MassEmailPage() {
                         onChange={() => toggleContact(c.id)}
                         className="mt-1 w-3.5 h-3.5 accent-primary"
                       />
-                      <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                      <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold flex-shrink-0">
                         {c.name[0]?.toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -629,7 +629,7 @@ export default function MassEmailPage() {
             )}
             <div className="flex gap-2 mt-4">
               <button onClick={() => setPresend(null)} className="flex-1 h-9 rounded-md border border-border text-[12px] font-semibold hover:bg-accent">Cancel</button>
-              <button onClick={doSend} disabled={presend.sendable === 0} className="flex-1 h-9 rounded-md gradient-brand text-white text-[12px] font-semibold shadow-glow disabled:opacity-50">Confirm &amp; Send {presend.sendable}</button>
+              <button onClick={doSend} disabled={presend.sendable === 0} className="flex-1 h-9 rounded-md bg-primary text-primary-foreground text-[12px] font-semibold shadow-glow disabled:opacity-50">Confirm &amp; Send {presend.sendable}</button>
             </div>
           </div>
         </div>
@@ -672,7 +672,7 @@ export default function MassEmailPage() {
             </div>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setShowSchedule(false)} className="flex-1 h-9 rounded-md border border-border text-[12px] font-semibold hover:bg-accent">Cancel</button>
-              <button onClick={scheduleBatches} disabled={scheduling || !startAt} className="flex-1 h-9 rounded-md gradient-brand text-white text-[12px] font-semibold shadow-glow disabled:opacity-50">{scheduling ? "Scheduling…" : `Schedule ${batchCount} batch(es)`}</button>
+              <button onClick={scheduleBatches} disabled={scheduling || !startAt} className="flex-1 h-9 rounded-md bg-primary text-primary-foreground text-[12px] font-semibold shadow-glow disabled:opacity-50">{scheduling ? "Scheduling…" : `Schedule ${batchCount} batch(es)`}</button>
             </div>
           </div>
         </div>

@@ -71,7 +71,7 @@ export default function SalesPage() {
     return (
       <>
         <Header title="Sales" subtitle="Loading..." />
-        <div className="p-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-32 bg-card rounded-xl border border-border/60 animate-pulse" />
           ))}
@@ -115,7 +115,7 @@ export default function SalesPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1400px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1400px]">
         {/* ── Top KPIs ─────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <SalesKpi
@@ -188,10 +188,10 @@ export default function SalesPage() {
                     </div>
                     <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                       <div
-                        className={cn("h-full bg-gradient-to-r transition-all",
-                          isAchieved ? "from-emerald-500 to-emerald-600" :
-                          isOnTrack ? "from-violet-500 to-indigo-600" :
-                          "from-amber-500 to-orange-600"
+                        className={cn("h-full transition-all",
+                          isAchieved ? "bg-emerald-600" :
+                          isOnTrack ? "bg-primary" :
+                          "bg-amber-500"
                         )}
                         style={{ width: `${Math.min(t.achievedPct, 100)}%` }}
                       />

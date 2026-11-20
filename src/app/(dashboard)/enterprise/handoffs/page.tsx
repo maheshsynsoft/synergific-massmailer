@@ -118,7 +118,7 @@ export default function HandoffsPage() {
         subtitle={`${pendingCount} pending · ${handoffs.length} total`}
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1200px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1200px]">
         {/* Tabs */}
         <div className="flex gap-px bg-muted rounded-md p-0.5 w-fit">
           <button
@@ -164,7 +164,7 @@ export default function HandoffsPage() {
                 return (
                   <div key={h.id} className="px-5 py-4 hover:bg-muted/30 transition-colors">
                     <div className="flex items-start gap-4">
-                      <div className="w-9 h-9 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[12px] font-bold flex-shrink-0">
+                      <div className="w-9 h-9 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[12px] font-bold flex-shrink-0">
                         {h.contact?.name[0]?.toUpperCase() || "?"}
                       </div>
 

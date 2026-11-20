@@ -141,7 +141,7 @@ export default function WorkflowsPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1000px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1000px]">
         {workflows.length === 0 ? (
           <div className="bg-card rounded-xl border border-border/60 shadow-xs px-5 py-16 text-center">
             <div className="w-14 h-14 rounded-2xl bg-muted mx-auto mb-4 flex items-center justify-center">

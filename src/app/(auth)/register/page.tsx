@@ -39,16 +39,12 @@ export default function RegisterPage() {
     <div className="min-h-screen flex bg-background">
       {/* ── LEFT: Brand panel ────────────── */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
-        <div className="absolute inset-0 gradient-brand" />
-        <div className="absolute inset-0 bg-grid bg-grid-fade opacity-20" />
+        <div className="absolute inset-0 bg-primary text-primary-foreground" />
 
-        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full bg-violet-300/20 blur-3xl" />
-
-        <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
+        <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground w-full">
           <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-lg border border-white/20 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none">
+            <div className="w-10 h-10 rounded-xl bg-card/30 border border-primary-foreground/20 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-primary-foreground" fill="none">
                 <path
                   d="M16 6H10C8.34315 6 7 7.34315 7 9C7 10.6569 8.34315 12 10 12H14C15.6569 12 17 13.3431 17 15C17 16.6569 15.6569 18 14 18H8"
                   stroke="currentColor"
@@ -59,7 +55,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <p className="text-[16px] font-bold tracking-tight">Synergific</p>
-              <p className="text-[10px] text-white/70 tracking-wider uppercase font-semibold">AI Business Suite</p>
+              <p className="text-[10px] text-primary-foreground tracking-wider uppercase font-semibold">AI Business Suite</p>
             </div>
           </Link>
 
@@ -67,7 +63,7 @@ export default function RegisterPage() {
             <h2 className="text-[44px] font-bold leading-[1.1] tracking-tight mb-4">
               Start automating your sales today.
             </h2>
-            <p className="text-[15px] text-white/80 leading-relaxed mb-8">
+            <p className="text-[15px] text-primary-foreground leading-relaxed mb-8">
               Join Synergific&apos;s AI Business Suite. Send mass campaigns, get smart replies,
               automate follow-ups — all built for modern teams.
             </p>
@@ -79,8 +75,8 @@ export default function RegisterPage() {
                 "Reply classification: positive, negative, question",
                 "Unified inbox: email + WhatsApp",
               ].map((feature) => (
-                <li key={feature} className="flex items-center gap-2.5 text-[13px] text-white/90">
-                  <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <li key={feature} className="flex items-center gap-2.5 text-[13px] text-primary-foreground">
+                  <div className="w-4 h-4 rounded-full bg-primary-foreground/15 flex items-center justify-center flex-shrink-0">
                     <CheckCircle2 className="w-2.5 h-2.5" strokeWidth={3} />
                   </div>
                   {feature}
@@ -92,15 +88,15 @@ export default function RegisterPage() {
           <div className="grid grid-cols-3 gap-4 max-w-md">
             <div>
               <p className="text-2xl font-bold">500+</p>
-              <p className="text-[10px] text-white/60 uppercase tracking-wider font-semibold mt-0.5">Clients</p>
+              <p className="text-[10px] text-primary-foreground uppercase tracking-wider font-semibold mt-0.5">Clients</p>
             </div>
             <div>
               <p className="text-2xl font-bold">200+</p>
-              <p className="text-[10px] text-white/60 uppercase tracking-wider font-semibold mt-0.5">Courses</p>
+              <p className="text-[10px] text-primary-foreground uppercase tracking-wider font-semibold mt-0.5">Courses</p>
             </div>
             <div>
               <p className="text-2xl font-bold">50+</p>
-              <p className="text-[10px] text-white/60 uppercase tracking-wider font-semibold mt-0.5">Partners</p>
+              <p className="text-[10px] text-primary-foreground uppercase tracking-wider font-semibold mt-0.5">Partners</p>
             </div>
           </div>
         </div>
@@ -110,8 +106,8 @@ export default function RegisterPage() {
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-[400px]">
           <div className="lg:hidden flex items-center gap-2.5 mb-10">
-            <div className="w-9 h-9 rounded-lg gradient-brand flex items-center justify-center shadow-glow">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none">
+            <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-glow">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-primary-foreground" fill="none">
                 <path
                   d="M16 6H10C8.34315 6 7 7.34315 7 9C7 10.6569 8.34315 12 10 12H14C15.6569 12 17 13.3431 17 15C17 16.6569 15.6569 18 14 18H8"
                   stroke="currentColor"
@@ -195,7 +191,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-lg gradient-brand text-white font-semibold text-[13px] shadow-glow hover:shadow-glow-strong transition-all disabled:opacity-60 flex items-center justify-center gap-2 group"
+              className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-semibold text-[13px] shadow-glow hover:shadow-glow-strong transition-all disabled:opacity-60 flex items-center justify-center gap-2 group"
             >
               {loading ? (
                 "Creating account..."

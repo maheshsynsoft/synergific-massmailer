@@ -32,25 +32,25 @@ export default function DomainHealthPage() {
     <>
       <Header title="Domain Health" subtitle="Sending authentication & deliverability"
         actions={<button onClick={load} className="h-8 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold border border-border hover:bg-accent"><RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} /> Refresh</button>} />
-      <div className="p-8 space-y-5 max-w-3xl">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-3xl">
         {!data ? (
           <p className="text-[13px] text-muted-foreground">{loading ? "Checking DNS…" : "No data"}</p>
         ) : (
           <>
-            <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5">
-              <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center"><Shield className="w-7 h-7 text-primary" /></div>
-              <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-card p-4 sm:p-5">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center"><Shield className="w-7 h-7 text-primary" /></div>
+              <div className="flex-1 min-w-[170px]">
                 <p className="text-[13px] text-muted-foreground">Sending domain</p>
-                <p className="text-[18px] font-bold">{data.domain}</p>
+                <p className="text-[16px] sm:text-[18px] font-bold break-words">{data.domain}</p>
               </div>
-              <div className="text-right">
-                <p className={cn("text-[34px] font-bold leading-none", scoreColor(data.score))}>{data.score}%</p>
+              <div className="text-right ml-auto">
+                <p className={cn("text-[28px] sm:text-[34px] font-bold leading-none", scoreColor(data.score))}>{data.score}%</p>
                 <p className="text-[10px] text-muted-foreground uppercase">Auth score</p>
               </div>
             </div>
 
             {metrics && (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <div className="rounded-lg border border-border bg-card p-3"><p className="text-[18px] font-bold text-rose-400">{metrics.bounceRate ?? 0}%</p><p className="text-[10px] text-muted-foreground uppercase">Bounce rate</p></div>
                 <div className="rounded-lg border border-border bg-card p-3"><p className="text-[18px] font-bold text-amber-400">{metrics.bounced ?? 0}</p><p className="text-[10px] text-muted-foreground uppercase">Bounced (suppressed)</p></div>
                 <div className="rounded-lg border border-border bg-card p-3"><p className="text-[18px] font-bold text-slate-400">{metrics.complained ?? 0}</p><p className="text-[10px] text-muted-foreground uppercase">Spam complaints</p></div>

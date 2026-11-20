@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { RouteTitle } from "@/components/layout/route-title";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,8 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Business Suite",
-  description: "AI-powered Marketing, Sales & Support Platform",
+  // The tab title ("<Page> | Synergific") is set per route by <RouteTitle />.
+  applicationName: "Synergific",
+  description: "Synergific: email campaigns, sales and support in one place",
 };
 
 export default function RootLayout({
@@ -30,6 +32,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
+        <RouteTitle />
         <Providers>{children}</Providers>
       </body>
     </html>

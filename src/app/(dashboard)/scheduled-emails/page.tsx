@@ -250,7 +250,7 @@ export default function ScheduledEmailsPage() {
                 {/* LEFT: Template + Compose */}
                 <div className="lg:col-span-7 space-y-4">
                   {/* Schedule time */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label className="text-[12px] font-semibold">Name (optional)</Label>
                       <Input
@@ -403,7 +403,7 @@ export default function ScheduledEmailsPage() {
                               onChange={() => toggleContact(c.id)}
                               className="w-3 h-3 accent-primary"
                             />
-                            <div className="w-6 h-6 rounded bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[9px] font-bold flex-shrink-0">
+                            <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-bold flex-shrink-0">
                               {c.name[0]?.toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -443,7 +443,7 @@ export default function ScheduledEmailsPage() {
         }
       />
 
-      <div className="p-6 space-y-5 animate-fade-in max-w-[1200px]">
+      <div className="p-4 sm:p-6 space-y-5 animate-fade-in max-w-[1200px]">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card className="border-border/60">

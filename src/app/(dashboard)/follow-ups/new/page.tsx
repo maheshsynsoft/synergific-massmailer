@@ -57,11 +57,11 @@ export default function NewSequencePage() {
   return (
     <>
       <Header title="Create Follow-up Sequence" />
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <Card>
           <CardHeader><CardTitle>Sequence Details</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Name *</Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. New Lead Follow-up" />
@@ -102,7 +102,7 @@ export default function NewSequencePage() {
                 )}
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Channel</Label>
                     <Select value={step.channel} onValueChange={(v) => updateStep(i, "channel", v)}>

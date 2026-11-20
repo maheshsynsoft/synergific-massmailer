@@ -232,22 +232,22 @@ export default function TemplatesPage() {
   return (
     <>
       <Header title="Message Templates" />
-      <div className="p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <p className="text-sm text-muted-foreground">{templates.length} templates · Use <code className="bg-muted px-1 rounded">{"{{name}}"}</code>, <code className="bg-muted px-1 rounded">{"{{email}}"}</code>, <code className="bg-muted px-1 rounded">{"{{company}}"}</code> as variables</p>
           <div className="flex items-center gap-2">
             {/* AI Template Generator */}
             <Dialog open={aiOpen} onOpenChange={(v) => { setAiOpen(v); if (!v) resetAIState(); }}>
               <DialogTrigger render={
-                <button className="h-9 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-90 transition-opacity shadow-md" />
+                <button className="h-9 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity shadow-md" />
               }>
                 <Sparkles className="w-3.5 h-3.5" /> Create with AI
               </DialogTrigger>
               <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-primary-foreground" />
                     </div>
                     Create Template with AI
                   </DialogTitle>
@@ -313,7 +313,7 @@ export default function TemplatesPage() {
                       <p className="text-[11px] text-muted-foreground">Pick from above or type your own keywords. More specific = better results.</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label className="text-[12px] font-semibold">Target Audience</Label>
                         <Select value={aiAudience} onValueChange={setAiAudience}>
@@ -349,7 +349,7 @@ export default function TemplatesPage() {
                     <Button
                       onClick={generateWithAI}
                       disabled={!aiKeywords.trim() || aiGenerating}
-                      className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-90"
+                      className="w-full bg-primary text-primary-foreground hover:opacity-90"
                     >
                       {aiGenerating ? (
                         <>
@@ -374,7 +374,7 @@ export default function TemplatesPage() {
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-bold border border-emerald-500/20">Ready to edit</span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-2">
                           <Label className="text-[12px] font-semibold">Template Name *</Label>
                           <Input
@@ -448,7 +448,7 @@ export default function TemplatesPage() {
                         <Button
                           onClick={saveAITemplate}
                           disabled={!aiTemplateName || aiSaving}
-                          className="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-90"
+                          className="flex-1 bg-primary text-primary-foreground hover:opacity-90"
                         >
                           {aiSaving ? (
                             <>
@@ -478,7 +478,7 @@ export default function TemplatesPage() {
               <DialogContent>
                 <DialogHeader><DialogTitle>Create Template</DialogTitle></DialogHeader>
                 <form onSubmit={handleCreate} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Name *</Label>
                       <Input name="name" required placeholder="Welcome Email" />
@@ -525,7 +525,7 @@ export default function TemplatesPage() {
                 <p className="text-[13px] text-muted-foreground mb-4">Create reusable email and WhatsApp templates manually or let AI generate them for you.</p>
                 <Button
                   onClick={() => setAiOpen(true)}
-                  className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-90"
+                  className="bg-primary text-primary-foreground hover:opacity-90"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Create with AI
@@ -558,16 +558,16 @@ export default function TemplatesPage() {
                   </CardContent>
                 ) : (
                   <>
-                    <CardHeader className="flex flex-row items-start justify-between pb-2">
-                      <div>
+                    <CardHeader className="flex flex-col sm:flex-row items-start justify-between gap-2 pb-2">
+                      <div className="min-w-0">
                         <CardTitle className="text-sm">{t.name}</CardTitle>
-                        <div className="flex gap-2 mt-1">
+                        <div className="flex flex-wrap gap-2 mt-1">
                           <Badge variant="outline" className="text-xs">{t.type}</Badge>
                           {t.category && <Badge variant="secondary" className="text-xs">{t.category}</Badge>}
                           <Badge variant={t.isActive ? "default" : "secondary"} className="text-xs">{t.isActive ? "Active" : "Inactive"}</Badge>
                         </div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex flex-wrap gap-1 -ml-2.5 sm:ml-0 shrink-0">
                         <Button size="sm" variant="ghost" onClick={() => setEditingId(t.id)}>Edit</Button>
                         <Button size="sm" variant="ghost" onClick={() => toggleActive(t)}>{t.isActive ? "Disable" : "Enable"}</Button>
                         <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleDelete(t.id)}>Delete</Button>

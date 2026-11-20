@@ -24,7 +24,7 @@ export default async function SupportPage() {
   return (
     <>
       <Header title="Support" />
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard title="Open Tickets" value={openCount} icon="🎫" />
           <StatCard title="In Progress" value={inProgressCount} icon="🔄" />

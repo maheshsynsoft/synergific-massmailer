@@ -127,7 +127,7 @@ export default function RoutingRulesPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1200px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1200px]">
         <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4 text-[12px] text-blue-200">
           <p className="font-semibold mb-1">How rules work</p>
           <p className="text-blue-200/80">
@@ -251,7 +251,7 @@ export default function RoutingRulesPage() {
                 placeholder="e.g. Enterprise leads → Mahesh"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-[11px]">Source contains</Label>
                 <Input
@@ -269,7 +269,7 @@ export default function RoutingRulesPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-[11px]">Tag contains</Label>
                 <Input

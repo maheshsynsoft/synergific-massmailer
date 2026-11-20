@@ -46,7 +46,7 @@ export default function FollowUpsPage() {
   return (
     <>
       <Header title="Follow-up Sequences" />
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard title="Total Sequences" value={sequences.length} icon="🔄" />
           <StatCard title="Active Sequences" value={activeCount} icon="✅" />

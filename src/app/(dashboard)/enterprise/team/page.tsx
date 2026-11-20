@@ -103,7 +103,7 @@ export default function TeamPage() {
   return (
     <>
       <Header title="Team Management" />
-      <div className="p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">{members.length} team members · {members.filter((m) => m.isActive).length} active</p>
           <Dialog open={open} onOpenChange={setOpen}>

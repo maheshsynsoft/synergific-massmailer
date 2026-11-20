@@ -29,7 +29,7 @@ const variantStyles = {
     valueColor: "text-foreground",
   },
   brand: {
-    iconBg: "bg-violet-500/10 text-violet-400 ring-1 ring-violet-500/20",
+    iconBg: "bg-primary/15 text-primary",
     valueColor: "text-foreground",
   },
 };
@@ -50,7 +50,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "group relative bg-card rounded-xl p-5 border border-border/60 shadow-xs hover:shadow-md hover:border-border transition-all duration-200",
+        "group relative bg-card rounded-2xl p-5 border border-border shadow-xs hover-lift animate-fade-in",
         className
       )}
     >

@@ -92,16 +92,16 @@ export default function KnowledgeBasePage() {
   return (
     <>
       <Header title="Knowledge Base" />
-      <div className="p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="p-4 sm:p-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-1 min-w-0 items-center gap-3">
             <Input
               placeholder="Search articles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-sm"
             />
-            <p className="text-sm text-muted-foreground">{articles.length} articles</p>
+            <p className="text-sm text-muted-foreground whitespace-nowrap">{articles.length} articles</p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger render={<Button />}>+ Add Article</DialogTrigger>
@@ -127,7 +127,7 @@ export default function KnowledgeBasePage() {
         </div>
 
         {categories.length > 0 && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {categories.map((cat) => (
               <Badge key={cat} variant="outline" className="cursor-pointer" onClick={() => setSearch(cat!)}>
                 {cat}
@@ -169,17 +169,17 @@ export default function KnowledgeBasePage() {
                   </CardContent>
                 ) : (
                   <>
-                    <CardHeader className="flex flex-row items-start justify-between">
-                      <div>
+                    <CardHeader className="flex flex-col sm:flex-row items-start justify-between gap-2">
+                      <div className="min-w-0">
                         <CardTitle className="text-sm">{article.question}</CardTitle>
-                        <div className="flex gap-2 mt-1">
+                        <div className="flex flex-wrap gap-2 mt-1">
                           {article.category && <Badge variant="outline" className="text-xs">{article.category}</Badge>}
                           <Badge variant={article.isPublished ? "default" : "secondary"} className="text-xs">
                             {article.isPublished ? "Published" : "Draft"}
                           </Badge>
                         </div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex flex-wrap gap-1 -ml-2.5 sm:ml-0 shrink-0">
                         <Button size="sm" variant="ghost" onClick={() => setEditingId(article.id)}>Edit</Button>
                         <Button size="sm" variant="ghost" onClick={() => togglePublish(article)}>
                           {article.isPublished ? "Unpublish" : "Publish"}

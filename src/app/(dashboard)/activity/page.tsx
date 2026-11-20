@@ -139,13 +139,13 @@ export default function ActivityFeedPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1000px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1000px]">
         {/* Tabs */}
-        <div className="flex gap-px bg-muted rounded-md p-0.5 w-fit">
+        <div className="flex gap-px bg-muted rounded-md p-0.5 w-fit max-w-full overflow-x-auto scrollbar-thin">
           <button
             onClick={() => setTab("mine")}
             className={cn(
-              "h-8 px-3 text-[12px] font-semibold rounded transition-all flex items-center gap-1.5",
+              "h-8 px-3 text-[12px] font-semibold rounded transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0",
               tab === "mine" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -154,7 +154,7 @@ export default function ActivityFeedPage() {
           <button
             onClick={() => setTab("notifications")}
             className={cn(
-              "h-8 px-3 text-[12px] font-semibold rounded transition-all flex items-center gap-1.5",
+              "h-8 px-3 text-[12px] font-semibold rounded transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0",
               tab === "notifications" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -163,7 +163,7 @@ export default function ActivityFeedPage() {
           <button
             onClick={() => setTab("audit")}
             className={cn(
-              "h-8 px-3 text-[12px] font-semibold rounded transition-all flex items-center gap-1.5",
+              "h-8 px-3 text-[12px] font-semibold rounded transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0",
               tab === "audit" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -295,7 +295,7 @@ export default function ActivityFeedPage() {
               <div className="divide-y divide-border/60">
                 {auditLogs.map((log) => (
                   <div key={log.id} className="px-4 py-3 flex items-start gap-3 hover:bg-muted/30 transition-colors">
-                    <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                    <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold flex-shrink-0">
                       {log.user.name[0]?.toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">

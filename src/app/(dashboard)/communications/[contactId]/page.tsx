@@ -232,7 +232,7 @@ export default function ContactTimelinePage() {
         }
       />
 
-      <div className="p-6 animate-fade-in">
+      <div className="p-4 sm:p-6 animate-fade-in">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 max-w-[1400px]">
           {/* ── Main column ─────────────────── */}
           <div className="lg:col-span-2 space-y-5">
@@ -340,8 +340,8 @@ export default function ContactTimelinePage() {
                             className={cn(
                               "w-8 h-8 rounded-md flex items-center justify-center text-[11px] font-bold flex-shrink-0",
                               isInbound
-                                ? "bg-gradient-to-br from-blue-500 to-cyan-600 text-white"
-                                : "bg-gradient-to-br from-violet-500 to-indigo-600 text-white"
+                                ? "bg-foreground text-background"
+                                : "bg-primary text-primary-foreground"
                             )}
                             title={isInbound ? contact.name : "You"}
                           >
@@ -441,14 +441,14 @@ export default function ContactTimelinePage() {
 
             {/* Composer */}
             <div className="bg-card rounded-xl border border-border/60 shadow-xs overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-border/60 flex items-center gap-2.5 bg-muted/20">
+              <div className="px-4 sm:px-5 py-3.5 border-b border-border/60 flex flex-wrap items-center gap-2.5 bg-muted/20">
                 <div className="w-7 h-7 rounded-md bg-primary/10 ring-1 ring-primary/20 text-primary flex items-center justify-center">
                   <Send className="w-3.5 h-3.5" strokeWidth={2.5} />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-[160px]">
                   <h3 className="text-[13px] font-semibold">Send Message</h3>
-                  <p className="text-[10px] text-muted-foreground">
-                    Sent from <strong>cloud@synergificsoftware.com</strong> · You&apos;re CC&apos;d · itops BCC&apos;d
+                  <p className="text-[10px] text-muted-foreground break-words">
+                    Sent from <strong className="break-all">cloud@synergificsoftware.com</strong> · You&apos;re CC&apos;d · itops BCC&apos;d
                   </p>
                 </div>
                 {/* Channel pills */}
@@ -569,7 +569,7 @@ export default function ContactTimelinePage() {
                   <button
                     onClick={handleSend}
                     disabled={sending || !body.trim()}
-                    className="h-9 px-4 rounded-md flex items-center gap-1.5 text-[12px] font-semibold gradient-brand text-white shadow-glow hover:shadow-glow-strong disabled:opacity-50 transition-all"
+                    className="h-9 px-4 rounded-md flex items-center gap-1.5 text-[12px] font-semibold bg-primary text-primary-foreground shadow-glow hover:shadow-glow-strong disabled:opacity-50 transition-all"
                   >
                     {sending ? (
                       <>
@@ -592,9 +592,8 @@ export default function ContactTimelinePage() {
             {/* Identity hero */}
             <div className="bg-card rounded-xl border border-border/60 shadow-xs overflow-hidden">
               <div className="relative px-5 pt-5 pb-4">
-                <div className="absolute inset-0 gradient-mesh opacity-30" />
                 <div className="relative flex items-start gap-3">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[20px] font-bold shadow-glow flex-shrink-0">
+                  <div className="w-14 h-14 rounded-xl bg-primary text-primary-foreground flex items-center justify-center text-[20px] font-bold shadow-glow flex-shrink-0">
                     {initial}
                   </div>
                   <div className="min-w-0 flex-1">

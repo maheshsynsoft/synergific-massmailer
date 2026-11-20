@@ -88,12 +88,12 @@ export default function TicketDetailPage() {
     }
   }
 
-  if (!ticket) return <div className="p-6">Loading...</div>;
+  if (!ticket) return <div className="p-4 sm:p-6">Loading...</div>;
 
   return (
     <>
       <Header title={ticket.subject} />
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <div className="flex items-center gap-3">
           <Select value={ticket.status} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>

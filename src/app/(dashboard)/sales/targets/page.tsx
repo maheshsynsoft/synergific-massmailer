@@ -148,7 +148,7 @@ export default function SalesTargetsPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1200px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1200px]">
         {targets.length === 0 ? (
           <div className="bg-card rounded-xl border border-border/60 shadow-xs px-5 py-16 text-center">
             <div className="w-14 h-14 rounded-2xl bg-muted mx-auto mb-4 flex items-center justify-center">
@@ -165,10 +165,10 @@ export default function SalesTargetsPage() {
               const isAchieved = t.achievedPct >= 100;
               const isOnTrack = t.achievedPct >= 70;
               const colorClass = isAchieved
-                ? "from-emerald-500 to-emerald-600"
+                ? "bg-emerald-600"
                 : isOnTrack
-                ? "from-violet-500 to-indigo-600"
-                : "from-amber-500 to-orange-600";
+                ? "bg-primary"
+                : "bg-amber-500";
 
               return (
                 <div
@@ -177,7 +177,7 @@ export default function SalesTargetsPage() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className={cn("w-9 h-9 rounded-lg bg-gradient-to-br text-white flex items-center justify-center", colorClass)}>
+                      <div className={cn("w-9 h-9 rounded-lg text-white flex items-center justify-center", colorClass)}>
                         {isAchieved ? <Trophy className="w-4 h-4" /> : <Target className="w-4 h-4" />}
                       </div>
                       <div>
@@ -214,7 +214,7 @@ export default function SalesTargetsPage() {
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className={cn("h-full bg-gradient-to-r transition-all", colorClass)}
+                        className={cn("h-full transition-all", colorClass)}
                         style={{ width: `${Math.min(t.achievedPct, 100)}%` }}
                       />
                     </div>
@@ -222,7 +222,7 @@ export default function SalesTargetsPage() {
 
                   {t.owner && (
                     <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/60">
-                      <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[10px] font-bold">
+                      <div className="w-6 h-6 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
                         {t.owner.name[0]?.toUpperCase()}
                       </div>
                       <p className="text-[11px] text-muted-foreground">{t.owner.name}</p>

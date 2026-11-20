@@ -124,7 +124,7 @@ export default function LoginPage() {
 
       {/* ── Left: animation (top on mobile) ─────────── */}
       <div className="relative flex flex-col items-center justify-center bg-[#efe9fc] px-6 pt-8 pb-6 md:p-10">
-        <LoginIllustration className="w-full max-w-[250px] sm:max-w-[340px] md:max-w-[520px] h-auto" />
+        <LoginIllustration className="w-full max-w-[300px] sm:max-w-[400px] md:max-w-[580px] h-auto" />
         <div className={`${s.rise} text-center mt-3 md:mt-6`} style={delay(0.9)}>
           <p className="text-[14px] md:text-[16px] font-semibold text-[#3b3363]">Reach every inbox, effortlessly.</p>
           <p className="text-[12px] md:text-[13px] text-[#6b6590] mt-1">AI-personalised campaigns, replies &amp; follow-ups.</p>

@@ -57,7 +57,7 @@ export default function LeaderboardPage() {
     return (
       <>
         <Header title="Sales Leaderboard" subtitle="Loading..." />
-        <div className="p-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-32 bg-card rounded-xl border border-border/60 animate-pulse" />
           ))}
@@ -93,7 +93,7 @@ export default function LeaderboardPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1200px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1200px]">
         {/* ── Team Totals ─────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiTile label="Team Revenue" value={`₹${(data.teamTotals.wonRevenue / 1000).toFixed(1)}k`} description={`${data.teamTotals.wonCount} deals won`} icon={Trophy} color="emerald" />
@@ -104,13 +104,13 @@ export default function LeaderboardPage() {
 
         {/* ── Top 3 Podium ─────────────── */}
         {data.leaderboard.length > 0 && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {/* 2nd place */}
-            <PodiumCard rank={2} entry={second} icon={Medal} color="from-slate-400 to-slate-500" />
+            <PodiumCard rank={2} entry={second} icon={Medal} color="bg-slate-500" />
             {/* 1st place (taller) */}
-            <PodiumCard rank={1} entry={top} icon={Crown} color="from-amber-400 to-amber-600" tall />
+            <PodiumCard rank={1} entry={top} icon={Crown} color="bg-amber-500" tall />
             {/* 3rd place */}
-            <PodiumCard rank={3} entry={third} icon={Award} color="from-orange-400 to-orange-600" />
+            <PodiumCard rank={3} entry={third} icon={Award} color="bg-orange-500" />
           </div>
         )}
 
@@ -127,7 +127,8 @@ export default function LeaderboardPage() {
               <p className="text-[14px] font-semibold text-muted-foreground">No team members yet</p>
             </div>
           ) : (
-            <div className="divide-y divide-border/60">
+            <div className="overflow-x-auto scrollbar-thin">
+            <div className="divide-y divide-border/60 min-w-[720px]">
               <div className="px-4 py-2 grid grid-cols-12 gap-3 text-[10px] font-bold text-muted-foreground tracking-wider uppercase bg-muted/30">
                 <div className="col-span-1">#</div>
                 <div className="col-span-3">Name</div>
@@ -147,7 +148,7 @@ export default function LeaderboardPage() {
                     <RankBadge rank={idx + 1} />
                   </div>
                   <div className="col-span-3 flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0">
+                    <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[11px] font-bold flex-shrink-0">
                       {entry.name[0]?.toUpperCase()}
                     </div>
                     <div className="min-w-0">
@@ -189,10 +190,10 @@ export default function LeaderboardPage() {
                         </div>
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                           <div
-                            className={cn("h-full bg-gradient-to-r",
-                              entry.targetAttainment >= 100 ? "from-emerald-500 to-emerald-600" :
-                              entry.targetAttainment >= 70 ? "from-violet-500 to-indigo-600" :
-                              "from-amber-500 to-orange-600"
+                            className={cn("h-full",
+                              entry.targetAttainment >= 100 ? "bg-emerald-600" :
+                              entry.targetAttainment >= 70 ? "bg-primary" :
+                              "bg-amber-500"
                             )}
                             style={{ width: `${Math.min(entry.targetAttainment, 100)}%` }}
                           />
@@ -205,6 +206,7 @@ export default function LeaderboardPage() {
                 </div>
               ))}
             </div>
+            </div>
           )}
         </div>
       </div>
@@ -215,18 +217,18 @@ export default function LeaderboardPage() {
 function PodiumCard({ rank, entry, icon: Icon, color, tall }: { rank: number; entry?: LeaderboardEntry; icon: React.ComponentType<{ className?: string }>; color: string; tall?: boolean }) {
   if (!entry) {
     return (
-      <div className={cn("bg-card rounded-xl border border-border/60 shadow-xs p-5 flex flex-col items-center justify-center", tall ? "min-h-[200px]" : "min-h-[160px]")}>
+      <div className={cn("bg-card rounded-xl border border-border/60 shadow-xs p-3 sm:p-5 flex flex-col items-center justify-center", tall ? "min-h-[200px]" : "min-h-[160px]")}>
         <p className="text-[11px] text-muted-foreground/60">No data</p>
       </div>
     );
   }
   return (
-    <div className={cn("bg-card rounded-xl border border-border/60 shadow-xs p-5 flex flex-col items-center text-center relative overflow-hidden",
+    <div className={cn("bg-card rounded-xl border border-border/60 shadow-xs p-3 sm:p-5 flex flex-col items-center text-center relative overflow-hidden",
       tall ? "min-h-[220px] md:order-2" : "min-h-[180px]",
       rank === 1 ? "ring-1 ring-amber-500/40" : ""
     )}>
-      <div className={cn("absolute inset-x-0 top-0 h-1 bg-gradient-to-r", color)} />
-      <div className={cn("w-12 h-12 rounded-xl bg-gradient-to-br text-white flex items-center justify-center mb-3 shadow-lg", color)}>
+      <div className={cn("absolute inset-x-0 top-0 h-1", color)} />
+      <div className={cn("w-12 h-12 rounded-xl text-white flex items-center justify-center mb-3 shadow-lg", color)}>
         <Icon className="w-6 h-6" />
       </div>
       <p className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">#{rank}</p>

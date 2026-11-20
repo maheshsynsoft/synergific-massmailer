@@ -6,6 +6,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
   LayoutDashboard,
   Users,
@@ -37,6 +38,7 @@ import {
   Globe,
   MailCheck,
   Calendar,
+  Menu,
 } from "lucide-react";
 
 type CountKey = "leads" | "inbox" | "tasks" | "tickets" | "deals" | "handoffs";
@@ -44,7 +46,7 @@ type CountKey = "leads" | "inbox" | "tasks" | "tickets" | "deals" | "handoffs";
 interface NavItem {
   title: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   adminOnly?: boolean;
   countKey?: CountKey;
 }
@@ -52,7 +54,7 @@ interface NavItem {
 interface NavSection {
   id: string;
   title?: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   collapsible?: boolean;
   adminOnly?: boolean;
   items: NavItem[];
@@ -151,36 +153,313 @@ const navSections: NavSection[] = [
 type Counts = Record<CountKey, number>;
 const ZERO_COUNTS: Counts = { leads: 0, inbox: 0, tasks: 0, tickets: 0, deals: 0, handoffs: 0 };
 
-export function Sidebar() {
+interface CurrentUser {
+  name: string;
+  email: string;
+  role: string;
+}
+
+/** The collapsible section that holds this page, if any. */
+function sectionForPath(pathname: string | null): string | null {
+  if (!pathname) return null;
+  const match = navSections.find(
+    (section) =>
+      section.collapsible &&
+      section.items.some((item) => pathname === item.href || pathname.startsWith(item.href + "/"))
+  );
+  return match?.id ?? null;
+}
+
+function Brand() {
+  return (
+    <Link href="/dashboard" className="block px-2.5 group" aria-label="Synergific dashboard">
+      {/* Dark-text logo on light surfaces, white-text logo in dark mode */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo-1.jpeg"
+        alt="Synergific"
+        className="h-8 w-auto object-contain dark:hidden group-hover:opacity-90 transition-opacity"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo.png"
+        alt="Synergific"
+        className="h-8 w-auto object-contain hidden dark:block group-hover:opacity-90 transition-opacity"
+      />
+    </Link>
+  );
+}
+
+function CountBadge({ count, active }: { count: number; active?: boolean }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className={cn(
+        "ml-auto min-w-[22px] h-[20px] px-1.5 rounded-full inline-flex items-center justify-center text-[11px] font-semibold nums-tabular",
+        active ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+      )}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+interface NavContentProps {
+  pathname: string | null;
+  sections: NavSection[];
+  expanded: Record<string, boolean>;
+  counts: Counts;
+  currentUser: CurrentUser | null;
+  isAdminUser: boolean;
+  userRole: string;
+  onToggleSection: (id: string) => void;
+  onNavigate?: () => void;
+}
+
+function NavContent({
+  pathname,
+  sections,
+  expanded,
+  counts,
+  currentUser,
+  isAdminUser,
+  userRole,
+  onToggleSection,
+  onNavigate,
+}: NavContentProps) {
+  const linkBase =
+    "group flex items-center gap-2.5 rounded-xl transition-colors relative";
+
+
+  return (
+    <div className="flex flex-col h-full min-h-0">
+      <div className="px-3 pt-5 pb-4">
+        <Brand />
+      </div>
+
+      {/* ── Navigation ───────────────────── */}
+      <nav
+        aria-label="Main"
+        // Sections only slide after the user clicks in the nav. On page load
+        // they render straight into place.
+        onClickCapture={(e) => {
+          e.currentTarget.dataset.ready = "true";
+        }}
+        className="group/nav flex-1 overflow-y-auto scrollbar-thin px-3 pb-3">
+        {sections.map((section) => {
+          const SectionIcon = section.icon;
+          const isExpanded = expanded[section.id] ?? false;
+          const hasActiveChild = section.items.some(
+            (item) => pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href))
+          );
+
+          if (!section.collapsible) {
+            return (
+              <div key={section.id} className="space-y-0.5 mb-4">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  const badgeCount = item.countKey ? counts[item.countKey] : 0;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onNavigate}
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        linkBase,
+                        "px-3 py-2 text-[13.5px]",
+                        isActive
+                          ? "bg-sidebar-accent text-foreground font-semibold"
+                          : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60 font-medium"
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          "w-[17px] h-[17px] flex-shrink-0 transition-colors",
+                          isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                        )}
+                        strokeWidth={1.8}
+                      />
+                      <span className="flex-1 truncate">{item.title}</span>
+                      <CountBadge count={badgeCount} active={isActive} />
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          }
+
+          const open = isExpanded;
+          return (
+            <div key={section.id} className="mb-1">
+              <button
+                type="button"
+                onClick={() => onToggleSection(section.id)}
+                aria-expanded={open}
+                className={cn(
+                  "w-full group flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12.5px] font-semibold transition-colors",
+                  hasActiveChild ? "text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60"
+                )}
+              >
+                {SectionIcon && (
+                  <SectionIcon
+                    className={cn(
+                      "w-[17px] h-[17px] flex-shrink-0",
+                      hasActiveChild ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                    )}
+                    strokeWidth={1.8}
+                  />
+                )}
+                <span className="flex-1 text-left">{section.title}</span>
+                <ChevronDown
+                  className={cn(
+                    "w-3.5 h-3.5 text-muted-foreground group-data-[ready=true]/nav:transition-transform duration-200 motion-reduce:transition-none",
+                    open ? "rotate-0" : "-rotate-90"
+                  )}
+                  strokeWidth={2.2}
+                />
+              </button>
+
+              <div
+                className={cn(
+                  "grid group-data-[ready=true]/nav:transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none",
+                  open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                )}
+              >
+                <div className="overflow-hidden">
+                  <div className="ml-[21px] pl-3 border-l border-sidebar-border space-y-0.5 py-1">
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = pathname === item.href;
+                      const badgeCount = item.countKey ? counts[item.countKey] : 0;
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={onNavigate}
+                          tabIndex={open ? undefined : -1}
+                          aria-current={isActive ? "page" : undefined}
+                          className={cn(
+                            linkBase,
+                            "px-2.5 py-1.5 text-[13px]",
+                            isActive
+                              ? "bg-sidebar-accent text-foreground font-semibold"
+                              : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60 font-medium"
+                          )}
+                        >
+                          {isActive && (
+                            <span
+                              aria-hidden="true"
+                              className="absolute -left-[13.5px] top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-primary"
+                            />
+                          )}
+                          <Icon
+                            className={cn(
+                              "w-[15px] h-[15px] flex-shrink-0",
+                              isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                            )}
+                            strokeWidth={1.8}
+                          />
+                          <span className="flex-1 truncate">{item.title}</span>
+                          <CountBadge count={badgeCount} active={isActive} />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </nav>
+
+      {/* ── Footer: Settings + User ──────── */}
+      <div className="border-t border-sidebar-border px-3 py-3 space-y-2">
+        <div className="flex items-center gap-1">
+          <Link
+            href="/settings"
+            onClick={onNavigate}
+            aria-current={pathname === "/settings" ? "page" : undefined}
+            className={cn(
+              linkBase,
+              "flex-1 px-3 py-2 text-[13.5px]",
+              pathname === "/settings"
+                ? "bg-sidebar-accent text-foreground font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60 font-medium"
+            )}
+          >
+            <Settings className="w-[17px] h-[17px]" strokeWidth={1.8} />
+            Settings
+          </Link>
+          <ThemeToggle />
+        </div>
+
+        {currentUser && (
+          <div className="flex items-center gap-2.5 px-2 pt-1">
+            <div className="relative flex-shrink-0">
+              <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[12px] font-bold">
+                {currentUser.name?.[0]?.toUpperCase() || "U"}
+              </div>
+              <span
+                aria-hidden="true"
+                className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-sidebar"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p className="text-[13px] font-semibold truncate leading-tight">{currentUser.name}</p>
+                <span
+                  className={cn(
+                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider flex-shrink-0",
+                    isAdminUser ? "bg-primary/15 text-primary" : "bg-secondary text-secondary-foreground"
+                  )}
+                >
+                  {userRole}
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">{currentUser.email}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              aria-label="Sign out"
+              title="Sign out"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors flex-shrink-0"
+            >
+              <LogOut className="w-4 h-4" strokeWidth={1.8} />
+            </button>
+          </div>
+        )}
+        {!currentUser && (
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="w-full flex items-center justify-center gap-1.5 h-9 rounded-xl text-[12.5px] font-semibold border border-border text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" strokeWidth={2} />
+            Sign out
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface SidebarProps {
+  /** User resolved on the server, so admin-only sections render on first paint. */
+  initialUser: CurrentUser | null;
+}
+
+export function Sidebar({ initialUser }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Fallback: if no NextAuth session, fetch user from API (covers demo/fallback mode)
-  const [fallbackUser, setFallbackUser] = useState<{ name: string; email: string; role: string } | null>(null);
-  useEffect(() => {
-    if (!session?.user) {
-      fetch("/api/sidebar/counts")
-        .then((r) => r.ok ? r.json() : null)
-        .then(() => {
-          // If counts work, we have a server-side user — fetch their info
-          fetch("/api/enterprise/team")
-            .then((r) => r.ok ? r.json() : [])
-            .then((users) => {
-              if (Array.isArray(users) && users.length > 0) {
-                // Use the first admin as the current user (matches getCurrentUser fallback)
-                const admin = users.find((u: { role: string; isActive: boolean }) => u.role === "admin" && u.isActive) || users[0];
-                setFallbackUser({ name: admin.name, email: admin.email, role: admin.role });
-              }
-            })
-            .catch(() => {});
-        })
-        .catch(() => {});
-    }
-  }, [session?.user]);
-
-  const currentUser = session?.user
+  const sessionUser: CurrentUser | null = session?.user
     ? { name: session.user.name || "", email: session.user.email || "", role: (session.user as { role?: string }).role || "agent" }
-    : fallbackUser;
+    : null;
+  const currentUser = initialUser ?? sessionUser;
   const userRole = currentUser?.role || "agent";
   const isAdminUser = userRole === "admin";
 
@@ -216,241 +495,57 @@ export function Sidebar() {
     }))
     .filter((section) => section.items.length > 0);
 
-  // Persist expanded sections in localStorage
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setHydrated(true);
-    const stored = typeof window !== "undefined" ? localStorage.getItem("sidebar-expanded") : null;
-    if (stored) {
-      try {
-        setExpanded(JSON.parse(stored));
-        return;
-      } catch {}
-    }
-    // Default: auto-expand the section that contains the current path
-    const initial: Record<string, boolean> = {};
-    visibleSections.forEach((section) => {
-      if (section.collapsible && section.items.some((item) => pathname === item.href || pathname?.startsWith(item.href + "/"))) {
-        initial[section.id] = true;
-      }
-    });
-    setExpanded(initial);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Accordion: one section open at a time. It follows the route, so going
+  // to a page outside the open section closes it and opens the page's own.
+  const routeSection = sectionForPath(pathname);
+  const [openSection, setOpenSection] = useState<string | null>(routeSection);
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
+    setOpenSection(routeSection);
+  }
+  const expanded: Record<string, boolean> = openSection ? { [openSection]: true } : {};
 
   function toggleSection(id: string) {
-    const next = { ...expanded, [id]: !expanded[id] };
-    setExpanded(next);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("sidebar-expanded", JSON.stringify(next));
-    }
+    setOpenSection((current) => (current === id ? null : id));
   }
 
+  const navProps: NavContentProps = {
+    pathname,
+    sections: visibleSections,
+    expanded,
+    counts,
+    currentUser,
+    isAdminUser,
+    userRole,
+    onToggleSection: toggleSection,
+  };
+
   return (
-    <aside className="w-[244px] flex-shrink-0 border-r border-sidebar-border bg-sidebar flex flex-col h-screen sticky top-0">
-      {/* ── Brand ─────────────────────────── */}
-      <div className="px-5 py-3 border-b border-sidebar-border">
-        <Link href="/dashboard" className="flex flex-col items-center gap-1.5 group">
-          <img
-            src="/logo.png"
-            alt="Synergific Software"
-            className="w-[160px] h-auto object-contain group-hover:scale-[1.02] transition-transform"
-          />
-          <p className="text-[10px] font-semibold text-muted-foreground tracking-widest uppercase">
-            Business Suite
-          </p>
-        </Link>
+    <>
+      {/* ── Mobile top bar (below lg) ─────── */}
+      <div className="lg:hidden flex items-center justify-between gap-3 h-14 px-4 border-b border-sidebar-border bg-sidebar">
+        <Brand />
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open navigation"
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-foreground hover:bg-sidebar-accent transition-colors"
+        >
+          <Menu className="w-5 h-5" strokeWidth={1.8} />
+        </button>
       </div>
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="p-0 gap-0 w-[280px] max-w-[85vw] bg-sidebar border-sidebar-border">
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <NavContent {...navProps} onNavigate={() => setMobileOpen(false)} />
+        </SheetContent>
+      </Sheet>
 
-      {/* ── Navigation ───────────────────── */}
-      <nav className="flex-1 overflow-y-auto scrollbar-thin px-2 py-3">
-        {visibleSections.map((section, sectionIdx) => {
-          const SectionIcon = section.icon;
-          const isExpanded = expanded[section.id] ?? false;
-          const hasActiveChild = section.items.some(
-            (item) => pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href))
-          );
-
-          // Non-collapsible (top section: Dashboard, Contacts)
-          if (!section.collapsible) {
-            return (
-              <div key={section.id} className="space-y-px">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = pathname === item.href;
-                  const badgeCount = item.countKey ? counts[item.countKey] : 0;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        "group flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-all relative",
-                        isActive
-                          ? "bg-sidebar-accent text-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60"
-                      )}
-                    >
-                      {isActive && (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-primary" />
-                      )}
-                      <Icon
-                        className={cn(
-                          "w-[15px] h-[15px] flex-shrink-0 transition-colors",
-                          isActive ? "text-primary" : "text-muted-foreground/80 group-hover:text-foreground"
-                        )}
-                        strokeWidth={2}
-                      />
-                      <span className="flex-1 truncate">{item.title}</span>
-                      {badgeCount > 0 && (
-                        <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/15 text-primary nums-tabular min-w-[20px] text-center">
-                          {badgeCount > 99 ? "99+" : badgeCount}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            );
-          }
-
-          // Collapsible section
-          return (
-            <div key={section.id} className={sectionIdx > 0 ? "mt-1.5" : ""}>
-              <button
-                onClick={() => toggleSection(section.id)}
-                className={cn(
-                  "w-full group flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[12px] font-semibold transition-all",
-                  hasActiveChild
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60"
-                )}
-              >
-                {SectionIcon && (
-                  <SectionIcon
-                    className={cn(
-                      "w-[15px] h-[15px] flex-shrink-0 transition-colors",
-                      hasActiveChild ? "text-primary" : "text-muted-foreground/80 group-hover:text-foreground"
-                    )}
-                    strokeWidth={2}
-                  />
-                )}
-                <span className="flex-1 text-left tracking-wide">{section.title}</span>
-                <ChevronDown
-                  className={cn(
-                    "w-3.5 h-3.5 text-muted-foreground/60 transition-transform duration-200",
-                    isExpanded && hydrated ? "rotate-0" : "-rotate-90"
-                  )}
-                  strokeWidth={2.5}
-                />
-              </button>
-
-              {/* Collapsible content */}
-              <div
-                className={cn(
-                  "overflow-hidden transition-all duration-200",
-                  isExpanded || !hydrated ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                )}
-              >
-                <div className="ml-3 mt-0.5 pl-3 border-l border-sidebar-border space-y-px py-1">
-                  {section.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = pathname === item.href;
-                    const badgeCount = item.countKey ? counts[item.countKey] : 0;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "group flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium transition-all relative",
-                          isActive
-                            ? "bg-sidebar-accent text-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60"
-                        )}
-                      >
-                        {isActive && (
-                          <div className="absolute -left-[13px] top-1/2 -translate-y-1/2 w-[3px] h-3.5 rounded-r-full bg-primary" />
-                        )}
-                        <Icon
-                          className={cn(
-                            "w-[13px] h-[13px] flex-shrink-0 transition-colors",
-                            isActive ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"
-                          )}
-                          strokeWidth={2}
-                        />
-                        <span className="flex-1 truncate">{item.title}</span>
-                        {badgeCount > 0 && (
-                          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary nums-tabular min-w-[18px] text-center">
-                            {badgeCount > 99 ? "99+" : badgeCount}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </nav>
-
-      {/* ── Footer: Settings + User ──────── */}
-      <div className="border-t border-sidebar-border p-2 space-y-px">
-        <div className="flex items-center gap-1">
-          <Link
-            href="/settings"
-            className={cn(
-              "group flex-1 flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-all",
-              pathname === "/settings"
-                ? "bg-sidebar-accent text-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60"
-            )}
-          >
-            <Settings
-              className={cn(
-                "w-[15px] h-[15px]",
-                pathname === "/settings" ? "text-primary" : "text-muted-foreground/80 group-hover:text-foreground"
-              )}
-              strokeWidth={2}
-            />
-            Settings
-          </Link>
-          <ThemeToggle />
-        </div>
-
-        <div className="px-2 py-2 mt-2 space-y-2">
-          {currentUser && (
-            <div className="flex items-center gap-2.5">
-              <div className="relative">
-                <div className="w-7 h-7 rounded-md gradient-brand text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0">
-                  {currentUser.name?.[0]?.toUpperCase() || "U"}
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-sidebar" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-[12px] font-semibold truncate leading-tight">{currentUser.name}</p>
-                  <span className={cn(
-                    "text-[8px] font-bold px-1 py-0.5 rounded uppercase tracking-wider flex-shrink-0",
-                    isAdminUser ? "bg-violet-500/20 text-violet-300" : "bg-blue-500/20 text-blue-300"
-                  )}>
-                    {userRole}
-                  </span>
-                </div>
-                <p className="text-[10px] text-muted-foreground truncate leading-tight">{currentUser.email}</p>
-              </div>
-            </div>
-          )}
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="w-full flex items-center justify-center gap-1.5 h-8 rounded-md text-[12px] font-semibold border border-border text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/60 transition-colors"
-          >
-            <LogOut className="w-3.5 h-3.5" strokeWidth={2} />
-            Sign out
-          </button>
-        </div>
-      </div>
-    </aside>
+      {/* ── Desktop sidebar (lg and up) ───── */}
+      <aside className="hidden lg:flex w-[256px] flex-shrink-0 border-r border-sidebar-border bg-sidebar flex-col h-screen sticky top-0">
+        <NavContent {...navProps} />
+      </aside>
+    </>
   );
 }

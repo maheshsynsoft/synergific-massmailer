@@ -362,7 +362,7 @@ export default function CommunicationsPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1400px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1400px]">
         {/* ── Stat tiles ─────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <button
@@ -530,7 +530,7 @@ export default function CommunicationsPage() {
                     <div className="flex items-start gap-3.5">
                       {/* Avatar */}
                       <div className="relative flex-shrink-0">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[14px] font-bold">
+                        <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-[14px] font-bold">
                           {initial}
                         </div>
                         {/* Unread indicator dot */}

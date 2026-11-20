@@ -2,7 +2,19 @@
 import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { cn } from "@/lib/utils";
-import { RefreshCw } from "lucide-react";
+import { Building2, RefreshCw } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  TableCard,
+  PersonCell,
+  LinkCell,
+  StatusPill,
+  EmptyRow,
+  firstColumn,
+  rowDelay,
+  toolbarButton,
+} from "@/components/data-table/records";
+import { Pagination, RowsPerPage, usePagination } from "@/components/data-table/pagination";
 
 interface Row { email: string; company: string | null; subject: string | null; status: string; when: string; category: string; side: string; action: string; }
 interface Data { total: number; byCategory: Record<string, number>; rows: Row[]; }
@@ -16,48 +28,80 @@ export default function DeliveryTrackingPage() {
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
+
+  const rows = data?.rows ?? [];
+  const { pageItems, page, setPage, pageCount, pageSize, setPageSize, total } = usePagination(rows, 10);
+
   return (
     <>
-      <Header title="Delivery Tracking" subtitle="Failed, bounced & rejected emails — with reasons & fixes"
-        actions={<button onClick={load} className="h-8 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold border border-border hover:bg-accent"><RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} /> Refresh</button>} />
-      <div className="p-8 space-y-5">
-        {data && Object.keys(data.byCategory).length > 0 && (
-          <div className="flex flex-wrap gap-3">
-            {Object.entries(data.byCategory).map(([cat, n]) => (
-              <div key={cat} className="rounded-lg border border-border bg-card px-4 py-2.5">
-                <p className="text-[18px] font-bold text-rose-400">{n}</p>
-                <p className="text-[11px] text-muted-foreground">{cat}</p>
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <table className="w-full text-[12px]">
-            <thead className="bg-muted/40 text-muted-foreground">
-              <tr>
-                <th className="text-left px-3 py-2 font-semibold">Email</th>
-                <th className="text-left px-3 py-2 font-semibold">Company</th>
-                <th className="text-left px-3 py-2 font-semibold">Category</th>
-                <th className="text-left px-3 py-2 font-semibold">Side</th>
-                <th className="text-left px-3 py-2 font-semibold">Recommended action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {!data || data.rows.length === 0 ? (
-                <tr><td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">{loading ? "Loading…" : "No delivery failures found."}</td></tr>
-              ) : data.rows.map((r, i) => (
-                <tr key={i} className="border-t border-border/60 hover:bg-muted/30">
-                  <td className="px-3 py-2 font-medium">{r.email}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{r.company || "—"}</td>
-                  <td className="px-3 py-2"><span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 whitespace-nowrap">{r.category}</span></td>
-                  <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{r.side}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{r.action}</td>
-                </tr>
+      <Header
+        title="Delivery Tracking"
+        subtitle="Failed, bounced & rejected emails, with reasons and fixes"
+        actions={
+          <button type="button" onClick={load} className={toolbarButton}>
+            <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} /> Refresh
+          </button>
+        }
+      />
+      <div className="p-3 sm:p-4 lg:p-6 space-y-3 max-w-[1440px]">
+        <TableCard
+          id="failure-records"
+          title="Delivery failures"
+          toolbar={
+            data && Object.keys(data.byCategory).length > 0 ? (
+              Object.entries(data.byCategory).map(([cat, n]) => (
+                <StatusPill key={cat} tone="danger" icon={null}>
+                  {n} {cat}
+                </StatusPill>
+              ))
+            ) : undefined
+          }
+          footer={
+            <>
+              <RowsPerPage pageSize={pageSize} onPageSizeChange={setPageSize} total={data?.total ?? total} />
+              <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+            </>
+          }
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className={firstColumn}>Email</TableHead>
+                <TableHead>Company</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Side</TableHead>
+                <TableHead>Recommended action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pageItems.length === 0 && (
+                <EmptyRow colSpan={5}>{loading ? "Loading…" : "No delivery failures found."}</EmptyRow>
+              )}
+              {pageItems.map((r, i) => (
+                <TableRow key={`${r.email}-${i}`} className="animate-row-in" style={rowDelay(i)}>
+                  <TableCell className={cn(firstColumn, "max-w-[280px]")}>
+                    <PersonCell name={r.email} email={r.subject} />
+                  </TableCell>
+                  <TableCell className="max-w-[200px]">
+                    {r.company ? (
+                      <LinkCell icon={<Building2 className="w-3.5 h-3.5" strokeWidth={1.8} />}>{r.company}</LinkCell>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell><StatusPill tone="danger">{r.category}</StatusPill></TableCell>
+                  <TableCell className="text-muted-foreground capitalize">{r.side}</TableCell>
+                  <TableCell className="text-muted-foreground whitespace-normal min-w-[260px]">{r.action}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-        {data && <p className="text-[11px] text-muted-foreground">Showing {data.rows.length} of {data.total}. Bounced / complained addresses are auto-suppressed and skipped on future sends.</p>}
+            </TableBody>
+          </Table>
+        </TableCard>
+        {data && (
+          <p className="text-[12px] text-muted-foreground px-1">
+            Bounced and complained addresses are suppressed automatically and skipped on future sends.
+          </p>
+        )}
       </div>
     </>
   );

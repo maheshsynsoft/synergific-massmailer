@@ -82,9 +82,9 @@ export default function TicketsPage() {
   return (
     <>
       <Header title="Tickets" />
-      <div className="p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
+      <div className="p-4 sm:p-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
             {["all", "open", "in_progress", "resolved", "closed"].map((f) => (
               <Button key={f} variant={filter === f ? "default" : "outline"} size="sm" onClick={() => setFilter(f)}>
                 {f === "all" ? "All" : f.replace("_", " ")}

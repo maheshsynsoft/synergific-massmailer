@@ -29,7 +29,7 @@ export default async function MarketingPage() {
   return (
     <>
       <Header title="Marketing" />
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard title="Total Campaigns" value={totalCampaigns} icon="📧" />
           <StatCard title="Active Campaigns" value={activeCampaigns} icon="📣" />

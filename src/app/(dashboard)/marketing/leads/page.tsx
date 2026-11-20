@@ -298,7 +298,7 @@ export default function LeadsPage() {
           <button
             onClick={scoreAll}
             disabled={scoringAll || unscoredCount === 0}
-            className="h-8 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold gradient-brand text-white shadow-glow hover:shadow-glow-strong disabled:opacity-50 transition-all"
+            className="h-8 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold bg-primary text-primary-foreground shadow-glow hover:shadow-glow-strong disabled:opacity-50 transition-all"
           >
             {scoringAll ? (
               <>
@@ -313,7 +313,7 @@ export default function LeadsPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1400px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1400px]">
         {/* ── Stat tiles (clickable filters) ─────── */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <button
@@ -436,7 +436,8 @@ export default function LeadsPage() {
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-border/60">
+            <div className="overflow-x-auto scrollbar-thin">
+            <div className="divide-y divide-border/60 min-w-[760px]">
               {/* Header row */}
               <div className="px-4 py-2 grid grid-cols-12 gap-3 text-[10px] font-bold text-muted-foreground tracking-wider uppercase bg-muted/30">
                 <div className="col-span-3">Lead</div>
@@ -462,7 +463,7 @@ export default function LeadsPage() {
                       className="col-span-3 flex items-center gap-2.5 min-w-0 cursor-pointer"
                     >
                       <div className="relative flex-shrink-0">
-                        <div className="w-9 h-9 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[12px] font-bold">
+                        <div className="w-9 h-9 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[12px] font-bold">
                           {lead.name[0]?.toUpperCase()}
                         </div>
                         {stale && (
@@ -598,6 +599,7 @@ export default function LeadsPage() {
                 );
               })}
             </div>
+            </div>
           )}
         </div>
       </div>
@@ -616,7 +618,7 @@ export default function LeadsPage() {
             <div className="space-y-4">
               {/* Recipient banner */}
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border border-border/60">
-                <div className="w-9 h-9 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[12px] font-bold flex-shrink-0">
+                <div className="w-9 h-9 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[12px] font-bold flex-shrink-0">
                   {composerLead.name[0]?.toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -743,7 +745,7 @@ export default function LeadsPage() {
                   <button
                     onClick={handleSend}
                     disabled={sending || !composerSubject.trim() || !composerBody.trim() || sendResult === "ok"}
-                    className="h-9 px-4 rounded-md flex items-center gap-1.5 text-[12px] font-semibold gradient-brand text-white shadow-glow hover:shadow-glow-strong disabled:opacity-50"
+                    className="h-9 px-4 rounded-md flex items-center gap-1.5 text-[12px] font-semibold bg-primary text-primary-foreground shadow-glow hover:shadow-glow-strong disabled:opacity-50"
                   >
                     {sending ? (
                       <>
@@ -846,7 +848,7 @@ export default function LeadsPage() {
               <div className="flex gap-2 pt-2">
                 <Link
                   href={`/contacts/${scoreResult.contact.id}`}
-                  className="flex-1 h-9 px-3 rounded-md flex items-center justify-center text-[12px] font-semibold gradient-brand text-white shadow-glow hover:shadow-glow-strong"
+                  className="flex-1 h-9 px-3 rounded-md flex items-center justify-center text-[12px] font-semibold bg-primary text-primary-foreground shadow-glow hover:shadow-glow-strong"
                 >
                   View Contact
                 </Link>

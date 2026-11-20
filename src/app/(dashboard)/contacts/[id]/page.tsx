@@ -140,12 +140,12 @@ export default function ContactDetailPage() {
     router.push("/contacts");
   }
 
-  if (!contact) return <div className="p-6">Loading...</div>;
+  if (!contact) return <div className="p-4 sm:p-6">Loading...</div>;
 
   return (
     <>
       <Header title={contact.name} />
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setEditing(!editing)}>
             {editing ? "Cancel" : "Edit"}
@@ -171,7 +171,7 @@ export default function ContactDetailPage() {
           <Card>
             <CardContent className="pt-6">
               <form onSubmit={handleUpdate} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Name</Label>
                     <Input name="name" defaultValue={contact.name} required />
@@ -250,7 +250,7 @@ export default function ContactDetailPage() {
                     </Select>
                   ) : contact.owner ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-md bg-gradient-to-br from-blue-500 to-cyan-600 text-white flex items-center justify-center text-[11px] font-bold">
+                      <div className="w-7 h-7 rounded-md bg-foreground text-background flex items-center justify-center text-[11px] font-bold">
                         {contact.owner.name[0]?.toUpperCase()}
                       </div>
                       <div className="min-w-0">

@@ -75,8 +75,8 @@ export default function CustomerPortalPage() {
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-[900px] mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg gradient-brand flex items-center justify-center shadow-glow-strong">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-glow-strong">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
               <p className="text-[15px] font-bold">Synergific Software</p>
@@ -92,8 +92,7 @@ export default function CustomerPortalPage() {
 
       <main className="max-w-[900px] mx-auto px-6 py-8 space-y-6 animate-fade-in">
         {/* Welcome banner */}
-        <div className="relative overflow-hidden rounded-2xl gradient-brand p-8 text-white shadow-lg">
-          <div className="absolute inset-0 bg-grid bg-grid-fade opacity-20" />
+        <div className="relative overflow-hidden rounded-2xl bg-primary text-primary-foreground p-8 shadow-lg">
           <div className="relative z-10">
             <p className="text-[11px] font-bold uppercase tracking-wider opacity-80 mb-2">
               Welcome back

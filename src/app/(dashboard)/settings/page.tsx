@@ -184,7 +184,7 @@ export default function SettingsPage() {
     <>
       <Header title="Settings" subtitle="Manage your account and integrations" />
 
-      <div className="p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in max-w-[1200px]">
+      <div className="p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in max-w-[1200px]">
         {/* Tabs sidebar */}
         <div className="lg:col-span-3 space-y-1">
           {TABS.map((t) => {
@@ -213,7 +213,7 @@ export default function SettingsPage() {
           {tab === "profile" && (
             <div className="bg-card rounded-xl border border-border/60 shadow-xs p-6 space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl gradient-brand text-white flex items-center justify-center text-2xl font-bold">
+                <div className="w-16 h-16 rounded-xl bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold">
                   {session?.user?.name?.[0]?.toUpperCase() || "U"}
                 </div>
                 <div>
@@ -221,7 +221,7 @@ export default function SettingsPage() {
                   <p className="text-[12px] text-muted-foreground">{session?.user?.email}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/60">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border/60">
                 <div className="space-y-2">
                   <Label>Name</Label>
                   <Input defaultValue={session?.user?.name || ""} disabled />

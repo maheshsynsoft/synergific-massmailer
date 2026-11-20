@@ -1,67 +1,84 @@
 import { prisma } from "@/lib/prisma";
-import { Header } from "@/components/layout/header";
-import { StatCard } from "@/components/layout/stat-card";
 import { getCurrentUser, isAdmin } from "@/lib/rbac";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { NotificationsBell } from "@/components/layout/notifications-bell";
+import { SearchTrigger } from "@/components/dashboard/search-trigger";
+import { EmailsChart, type DayVolume } from "@/components/dashboard/emails-chart";
+import { Gauge } from "@/components/dashboard/gauge";
+import { CountUp } from "@/components/dashboard/count-up";
+import { SendIllustration } from "@/components/dashboard/send-illustration";
+import { KpiCard, MiniBars, Sparkline, RingMeter, MeterBar } from "@/components/dashboard/kpi-card";
+import { ActivityChart, type ActivityDay } from "@/components/dashboard/activity-chart";
+import { PipelineDonut, type StageSlice } from "@/components/dashboard/pipeline-donut";
+import styles from "@/components/dashboard/dashboard.module.css";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Users,
-  Mail,
-  DollarSign,
-  Ticket,
+  TableCard,
+  PersonCell,
+  LinkCell,
+  IdCell,
+  StatusPill,
+  RowAction,
+  EmptyRow,
+  firstColumn,
+  rowDelay,
+  toolbarButton,
+  type StatusTone,
+} from "@/components/data-table/records";
+import {
+  ArrowRight,
   ArrowUpRight,
-  TrendingUp,
-  MessageSquare,
-  Send,
-  Inbox as InboxIcon,
-  Activity,
-  Plus,
-  Target as TargetIcon,
-  AlertTriangle,
-  Clock,
+  BarChart3,
+  CheckSquare,
   Inbox,
+  Mail,
+  Plus,
+  Briefcase,
+  Send,
+  Users,
+  IndianRupee,
+  Ticket,
 } from "lucide-react";
 
-const STALE_DAYS_AGO = () => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+const DAY = 24 * 60 * 60 * 1000;
 
-export default async function DashboardPage() {
-  const user = await getCurrentUser();
-  const isAdminUser = isAdmin(user);
+type CurrentUser = Awaited<ReturnType<typeof getCurrentUser>>;
 
-  // Scope deals & tickets by ownership for non-admins
+function ymd(d: Date | string | null | undefined) {
+  if (!d) return null;
+  return new Date(d).toLocaleDateString("en-CA");
+}
+
+/** All dashboard queries. Kept outside the component so time-based maths stays out of render. */
+async function getDashboardData(user: CurrentUser, isAdminUser: boolean) {
+  const now = Date.now();
+  const sevenDaysAgo = new Date(now - 7 * DAY);
+  const thirtyDaysAgo = new Date(now - 30 * DAY);
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  // 30 whole days ending today; KPI trends compare the last 14 days with the 14 before.
+  const windowStart = new Date(todayStart.getTime() - 29 * DAY);
+
   const dealScope = isAdminUser ? {} : { ownerId: user?.id };
   const ticketScope = isAdminUser ? {} : { OR: [{ assignedToId: user?.id }, { assignedToId: null }] };
   const ownerScope = isAdminUser ? {} : { ownerId: user?.id };
+  const emailScope = isAdminUser ? {} : { userId: user?.id };
 
-  // ── Today's focus data ──
-  const sevenDaysAgo = STALE_DAYS_AGO();
-  const [staleLeads, overdueTasks, unrepliedInbound] = user
+  const [staleLeadsRaw, overdueTasks, unrepliedInbound] = user
     ? await Promise.all([
         prisma.contact.findMany({
           where: {
             ...ownerScope,
             status: "lead",
-            OR: [
-              { lastContactedAt: null },
-              { lastContactedAt: { lt: sevenDaysAgo } },
-            ],
+            OR: [{ lastContactedAt: null }, { lastContactedAt: { lt: sevenDaysAgo } }],
           },
           orderBy: [{ leadScore: "desc" }, { lastContactedAt: "asc" }],
           take: 3,
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            company: true,
-            leadScore: true,
-            lastContactedAt: true,
-          },
+          select: { id: true, name: true, email: true, company: true, lastContactedAt: true },
         }),
         prisma.task.findMany({
-          where: {
-            done: false,
-            ...(isAdminUser ? {} : { userId: user.id }),
-            dueDate: { lt: new Date() },
-          },
+          where: { done: false, ...(isAdminUser ? {} : { userId: user.id }), dueDate: { lt: new Date(now) } },
           orderBy: { dueDate: "asc" },
           take: 3,
           select: { id: true, title: true, dueDate: true, priority: true },
@@ -79,453 +96,628 @@ export default async function DashboardPage() {
       ])
     : [[], [], []];
 
+  const staleLeads = staleLeadsRaw.map((l) => ({
+    ...l,
+    daysAgo: l.lastContactedAt ? Math.floor((now - new Date(l.lastContactedAt).getTime()) / DAY) : null,
+  }));
+
   const [
-    contactCount,
-    campaignCount,
-    dealCount,
-    ticketCount,
     recentDeals,
     recentTickets,
-    inboundEmails,
-    outboundEmails,
+    emailsWindow,
+    sent30,
+    opened30,
+    openTasks,
+    wonDealsAgg,
+    openTickets,
+    campaigns,
+    campaignTotal,
+    contactsWindow,
+    contactTotal,
+    wonWindow,
+    ticketsWindow,
+    stageGroups,
+    ticketTotal,
   ] = await Promise.all([
+    prisma.deal.findMany({ where: dealScope, take: 6, orderBy: { createdAt: "desc" }, include: { contact: true } }),
+    prisma.ticket.findMany({ where: ticketScope, take: 6, orderBy: { createdAt: "desc" }, include: { contact: true } }),
+    prisma.emailMessage.findMany({
+      where: { direction: "outbound", ...emailScope, sentAt: { gte: windowStart } },
+      select: { sentAt: true, openedAt: true },
+    }),
+    prisma.emailMessage.count({ where: { direction: "outbound", ...emailScope, sentAt: { gte: thirtyDaysAgo } } }),
+    prisma.emailMessage.count({
+      where: { direction: "outbound", ...emailScope, sentAt: { gte: thirtyDaysAgo }, openedAt: { not: null } },
+    }),
+    prisma.task.count({ where: { done: false, ...(isAdminUser ? {} : { userId: user?.id }) } }),
+    prisma.deal.aggregate({ where: { ...dealScope, stage: "won" }, _sum: { value: true }, _count: true }),
+    prisma.ticket.count({ where: { ...ticketScope, status: { in: ["open", "in_progress"] } } }),
+    isAdminUser
+      ? prisma.campaign.findMany({
+          orderBy: { updatedAt: "desc" },
+          take: 8,
+          select: {
+            id: true,
+            name: true,
+            subject: true,
+            status: true,
+            scheduledFor: true,
+            sentAt: true,
+            createdAt: true,
+            sentCount: true,
+            openRate: true,
+            clickRate: true,
+          },
+        })
+      : Promise.resolve([]),
+    isAdminUser ? prisma.campaign.count() : Promise.resolve(0),
+    prisma.contact.findMany({ where: { createdAt: { gte: windowStart } }, select: { createdAt: true } }),
     prisma.contact.count(),
-    isAdminUser ? prisma.campaign.count() : 0,
-    prisma.deal.count({ where: dealScope }),
-    prisma.ticket.count({ where: ticketScope }),
     prisma.deal.findMany({
-      where: dealScope,
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      include: { contact: true },
+      where: { ...dealScope, stage: "won", wonAt: { gte: windowStart } },
+      select: { wonAt: true, value: true },
     }),
-    prisma.ticket.findMany({
-      where: ticketScope,
-      take: 5,
-      orderBy: { createdAt: "desc" },
-      include: { contact: true },
-    }),
-    prisma.emailMessage.count({ where: { direction: "inbound" } }),
-    prisma.emailMessage.count({ where: { direction: "outbound" } }),
+    prisma.ticket.findMany({ where: { ...ticketScope, createdAt: { gte: windowStart } }, select: { createdAt: true } }),
+    prisma.deal.groupBy({ by: ["stage"], where: dealScope, _count: { _all: true }, _sum: { value: true } }),
+    prisma.ticket.count({ where: ticketScope }),
   ]);
 
-  const openTickets = await prisma.ticket.count({
-    where: { ...ticketScope, status: { in: ["open", "in_progress"] } },
-  });
-  const wonDealsAgg = await prisma.deal.aggregate({
-    where: { ...dealScope, stage: "won" },
-    _sum: { value: true },
-    _count: true,
-  });
-  const totalRevenue = wonDealsAgg._sum.value || 0;
+  /** 30 daily buckets (oldest first) for dates inside the window. */
+  function bucket<T>(rows: T[], date: (r: T) => Date | null, weight: (r: T) => number = () => 1) {
+    const out = new Array(30).fill(0) as number[];
+    for (const r of rows) {
+      const d = date(r);
+      if (!d) continue;
+      const idx = Math.floor((new Date(d).getTime() - windowStart.getTime()) / DAY);
+      if (idx >= 0 && idx < 30) out[idx] += weight(r);
+    }
+    return out;
+  }
+  const sum = (a: number[]) => a.reduce((s, v) => s + v, 0);
 
-  const stageColors: Record<string, { dot: string; text: string }> = {
-    lead: { dot: "bg-slate-400", text: "text-slate-300" },
-    qualified: { dot: "bg-blue-500", text: "text-blue-300" },
-    proposal: { dot: "bg-amber-500", text: "text-amber-300" },
-    negotiation: { dot: "bg-orange-500", text: "text-orange-300" },
-    won: { dot: "bg-emerald-500", text: "text-emerald-300" },
-    lost: { dot: "bg-rose-500", text: "text-rose-300" },
+  const sentDaily = bucket(emailsWindow, (m) => m.sentAt);
+  const openedDaily = bucket(emailsWindow, (m) => m.openedAt);
+  const contactsDaily = bucket(contactsWindow, (c) => c.createdAt);
+  const wonDaily = bucket(wonWindow, (d) => d.wonAt, (d) => d.value);
+  const ticketsDaily = bucket(ticketsWindow, (t) => t.createdAt);
+
+  const dayLabel = (i: number) => new Date(windowStart.getTime() + i * DAY);
+
+  // Bar chart: last 7 days vs the 7 days before.
+  const days: DayVolume[] = Array.from({ length: 7 }, (_, i) => ({
+    label: dayLabel(23 + i).toLocaleDateString("en-GB", { weekday: "short" }),
+    previous: sentDaily[16 + i],
+    current: sentDaily[23 + i],
+  }));
+
+  // Line chart: all 30 days.
+  const activity: ActivityDay[] = sentDaily.map((sent, i) => ({
+    label: dayLabel(i).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }),
+    sent,
+    opened: openedDaily[i],
+  }));
+
+  // KPI cards: last 14 days (series) vs the 14 before (previous).
+  const kpi = (daily: number[]) => ({ series: daily.slice(16), previous: sum(daily.slice(2, 16)) });
+
+  const pipeline: StageSlice[] = stageGroups.map((g) => ({
+    stage: g.stage,
+    count: g._count._all,
+    value: g._sum.value || 0,
+  }));
+
+  return {
+    staleLeads,
+    overdueTasks,
+    unrepliedInbound,
+    recentDeals,
+    recentTickets,
+    days,
+    openRate: sent30 > 0 ? (opened30 / sent30) * 100 : 0,
+    openTasks,
+    revenue: wonDealsAgg._sum.value || 0,
+    wonCount: wonDealsAgg._count,
+    openTickets,
+    campaigns,
+    campaignTotal,
+    activity,
+    pipeline,
+    contactTotal,
+    ticketTotal,
+    kpis: {
+      emails: kpi(sentDaily),
+      contacts: kpi(contactsDaily),
+      revenue: kpi(wonDaily),
+      tickets: kpi(ticketsDaily),
+    },
+  };
+}
+
+const campaignTone: Record<string, StatusTone> = {
+  draft: "neutral",
+  scheduled: "info",
+  active: "success",
+  sending: "primary",
+  paused: "warning",
+  failed: "danger",
+};
+
+const stageTone: Record<string, StatusTone> = {
+  lead: "neutral",
+  qualified: "primary",
+  proposal: "info",
+  negotiation: "warning",
+  won: "success",
+  lost: "danger",
+};
+
+const ticketStatusTone: Record<string, StatusTone> = {
+  open: "info",
+  in_progress: "warning",
+  resolved: "success",
+  closed: "neutral",
+};
+
+const priorityTone: Record<string, StatusTone> = {
+  urgent: "danger",
+  high: "warning",
+  medium: "info",
+  low: "neutral",
+};
+
+function StatLink({ href, value, children, delay }: { href: string; value: React.ReactNode; children: React.ReactNode; delay: number }) {
+  return (
+    <div className={cn("flex-[1_1_150px] flex flex-col gap-6 pb-1", styles.rise)} style={{ animationDelay: `${delay}ms` }}>
+      <span className="text-[30px] font-semibold tracking-tight leading-none nums-tabular">{value}</span>
+      <Link
+        href={href}
+        className="group inline-flex items-center justify-between gap-4 text-[12.5px] leading-snug text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <span>{children}</span>
+        <ArrowRight className="w-4 h-4 text-foreground transition-transform group-hover:translate-x-0.5" strokeWidth={2} />
+      </Link>
+    </div>
+  );
+}
+
+function RateCell({ value }: { value: number }) {
+  const pct = Math.max(0, Math.min(100, value));
+  return (
+    <div className="flex items-center justify-end gap-2.5">
+      <span className="w-14 h-1.5 rounded-full bg-foreground/10 overflow-hidden hidden sm:block" aria-hidden="true">
+        <span className={cn("block h-full rounded-full bg-primary", styles.fill)} style={{ width: `${pct}%` }} />
+      </span>
+      <span className="nums-tabular w-10 text-right">{pct.toFixed(0)}%</span>
+    </div>
+  );
+}
+
+function ViewAll({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="font-semibold text-primary hover:underline inline-flex items-center gap-0.5">
+      {children} <ArrowUpRight className="w-3 h-3" />
+    </Link>
+  );
+}
+
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
+  const isAdminUser = isAdmin(user);
+  const data = await getDashboardData(user, isAdminUser);
+  const firstName = user?.name?.split(" ")[0] || "there";
+
+  const statusCounts = data.campaigns.reduce<Record<string, number>>((acc, c) => {
+    acc[c.status] = (acc[c.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const attention = [
+    ...data.staleLeads.map((l) => ({
+      key: `lead-${l.id}`,
+      kind: "lead" as const,
+      name: l.name,
+      sub: l.email,
+      detail: l.company || "—",
+      when: l.daysAgo === null ? "Never contacted" : `${l.daysAgo} days ago`,
+      href: `/contacts/${l.id}`,
+    })),
+    ...data.overdueTasks.map((t) => ({
+      key: `task-${t.id}`,
+      kind: "task" as const,
+      name: t.title,
+      sub: null,
+      detail: t.priority ? `${t.priority} priority` : "—",
+      when: t.dueDate ? `Due ${ymd(t.dueDate)}` : "—",
+      href: "/tasks",
+    })),
+    ...data.unrepliedInbound.map((e) => ({
+      key: `mail-${e.id}`,
+      kind: "email" as const,
+      name: e.contact?.name || e.fromAddr,
+      sub: e.fromAddr,
+      detail: e.subject,
+      when: ymd(e.createdAt) || "—",
+      href: "/communications",
+    })),
+  ];
+
+  const attentionPill: Record<"lead" | "task" | "email", { tone: StatusTone; label: string }> = {
+    lead: { tone: "danger", label: "Stale lead" },
+    task: { tone: "warning", label: "Overdue task" },
+    email: { tone: "info", label: "Unreplied" },
   };
 
-  const priorityColors: Record<string, { bg: string; dot: string }> = {
-    urgent: { bg: "bg-rose-500/10 text-rose-300", dot: "bg-rose-500" },
-    high: { bg: "bg-orange-500/10 text-orange-300", dot: "bg-orange-500" },
-    medium: { bg: "bg-amber-500/10 text-amber-300", dot: "bg-amber-500" },
-    low: { bg: "bg-slate-500/10 text-slate-300", dot: "bg-slate-500" },
-  };
+  const sumOf = (a: number[]) => a.reduce((t, v) => t + v, 0);
+  const cumulative = (a: number[]) => a.reduce<number[]>((acc, v) => [...acc, (acc[acc.length - 1] ?? 0) + v], []);
+  const dealValue = data.pipeline.filter((p) => p.stage !== "lost").reduce((t, p) => t + p.value, 0);
+  const wonValue = data.pipeline.find((p) => p.stage === "won")?.value ?? 0;
+  const winShare = dealValue > 0 ? (wonValue / dealValue) * 100 : 0;
 
   return (
-    <>
-      <Header
-        title="Dashboard"
-        subtitle="Real-time business overview"
-        actions={
-          <>
-            <Link
-              href="/mass-email"
-              className="h-8 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold bg-foreground text-background hover:opacity-90 transition-opacity"
-            >
-              <Send className="w-3.5 h-3.5" />
-              Send Email
-            </Link>
-          </>
-        }
-      />
-
-      <div className="p-8 space-y-6 animate-fade-in max-w-[1400px]">
-        {/* ── Hero with mesh gradient ─────────────────── */}
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          <div className="absolute inset-0 gradient-mesh opacity-60" />
-          <div className="absolute inset-0 bg-grid bg-grid-fade opacity-30" />
-
-          <div className="relative z-10 p-8">
-            <div className="flex items-center justify-between gap-6">
-              <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider mb-3">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
-                  AI Suite Active
-                </div>
-                <h2 className="text-3xl font-bold tracking-tight mb-2">
-                  Welcome back to Synergific
-                </h2>
-                <p className="text-[14px] text-muted-foreground leading-relaxed">
-                  Marketing, Sales & Support powered by Claude AI. Your business runs on autopilot — send,
-                  classify, follow-up, all in one place.
-                </p>
-              </div>
-              <div className="hidden lg:flex flex-col gap-2">
-                <Link
-                  href="/communications"
-                  className="h-10 px-4 rounded-lg flex items-center gap-2 text-[13px] font-semibold bg-card border border-border shadow-sm hover:shadow-md transition-all"
-                >
-                  <InboxIcon className="w-4 h-4 text-primary" />
-                  Open Inbox
-                  <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground ml-1" />
-                </Link>
-                <Link
-                  href="/mass-email"
-                  className="h-10 px-4 rounded-lg flex items-center gap-2 text-[13px] font-semibold gradient-brand text-white shadow-glow hover:shadow-glow-strong transition-all"
-                >
-                  <Send className="w-4 h-4" />
-                  Send Mass Email
-                  <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
-                </Link>
-              </div>
-            </div>
-          </div>
+    <div className="p-3 sm:p-4 lg:p-6 space-y-6 max-w-[1440px] mx-auto">
+      {/* ── Greeting ─────────────────────────── */}
+      <div className={cn("flex flex-wrap items-center justify-between gap-3 px-1", styles.rise)}>
+        <div className="min-w-0">
+          <h1 className="text-[22px] sm:text-[24px] font-semibold tracking-tight leading-tight">Welcome back, {firstName}</h1>
+          <p className="text-[13px] text-muted-foreground mt-1">
+            {data.openTickets} open tickets · {data.wonCount} deals won
+          </p>
         </div>
-
-        {/* ── Stats grid ─────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Contacts"
-            value={contactCount}
-            icon={Users}
-            description={`${inboundEmails} inbound · ${outboundEmails} outbound emails`}
-            variant="brand"
-          />
-          <StatCard
-            title="Campaigns"
-            value={campaignCount}
-            icon={Mail}
-            description="Email & marketing campaigns"
-            variant="default"
-          />
-          <StatCard
-            title="Revenue"
-            value={`₹${(totalRevenue / 1000).toFixed(1)}k`}
-            icon={DollarSign}
-            description={`${wonDealsAgg._count} won · ${dealCount} total deals`}
-            variant="success"
-          />
-          <StatCard
-            title="Open Tickets"
-            value={openTickets}
-            icon={Ticket}
-            description={`${ticketCount} total support tickets`}
-            variant="warning"
-          />
-        </div>
-
-        {/* ── Today's Focus ─────────────────── */}
-        {(staleLeads.length > 0 || overdueTasks.length > 0 || unrepliedInbound.length > 0) && (
-          <div className="bg-card rounded-xl border border-border/60 shadow-xs overflow-hidden">
-            <div className="px-5 py-4 border-b border-border/60 flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-primary/10 ring-1 ring-primary/20 text-primary flex items-center justify-center">
-                <TargetIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-[13px] font-semibold">Today&apos;s Focus</h3>
-                <p className="text-[10px] text-muted-foreground">What needs your attention right now</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border/60">
-              {/* Stale leads */}
-              <div className="p-4">
-                <div className="flex items-center gap-1.5 mb-3">
-                  <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                  <p className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">
-                    Stale Leads
-                  </p>
-                </div>
-                {staleLeads.length === 0 ? (
-                  <p className="text-[12px] text-muted-foreground italic">All caught up</p>
-                ) : (
-                  <div className="space-y-2">
-                    {staleLeads.map((lead) => {
-                      const days = lead.lastContactedAt
-                        ? Math.floor(
-                            (Date.now() - new Date(lead.lastContactedAt).getTime()) /
-                              (24 * 60 * 60 * 1000)
-                          )
-                        : null;
-                      return (
-                        <Link
-                          key={lead.id}
-                          href={`/contacts/${lead.id}`}
-                          className="block p-2 -mx-2 rounded-md hover:bg-muted/40 transition-colors"
-                        >
-                          <p className="text-[12px] font-semibold truncate">{lead.name}</p>
-                          <p className="text-[10px] text-rose-300 mt-0.5">
-                            {days === null ? "Never contacted" : `${days} days ago`}
-                            {lead.company && ` · ${lead.company}`}
-                          </p>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-                <Link
-                  href="/marketing/leads"
-                  className="text-[10px] font-semibold text-primary hover:underline mt-3 inline-flex items-center gap-0.5"
-                >
-                  View all leads <ArrowUpRight className="w-2.5 h-2.5" />
-                </Link>
-              </div>
-
-              {/* Overdue tasks */}
-              <div className="p-4">
-                <div className="flex items-center gap-1.5 mb-3">
-                  <Clock className="w-3.5 h-3.5 text-amber-400" />
-                  <p className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">
-                    Overdue Tasks
-                  </p>
-                </div>
-                {overdueTasks.length === 0 ? (
-                  <p className="text-[12px] text-muted-foreground italic">Nothing overdue</p>
-                ) : (
-                  <div className="space-y-2">
-                    {overdueTasks.map((task) => (
-                      <Link
-                        key={task.id}
-                        href="/tasks"
-                        className="block p-2 -mx-2 rounded-md hover:bg-muted/40 transition-colors"
-                      >
-                        <p className="text-[12px] font-semibold truncate">{task.title}</p>
-                        <p className="text-[10px] text-amber-300 mt-0.5">
-                          Due {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : ""}
-                          {task.priority && ` · ${task.priority}`}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                <Link
-                  href="/tasks"
-                  className="text-[10px] font-semibold text-primary hover:underline mt-3 inline-flex items-center gap-0.5"
-                >
-                  View all tasks <ArrowUpRight className="w-2.5 h-2.5" />
-                </Link>
-              </div>
-
-              {/* Unreplied inbound */}
-              <div className="p-4">
-                <div className="flex items-center gap-1.5 mb-3">
-                  <Inbox className="w-3.5 h-3.5 text-violet-400" />
-                  <p className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">
-                    Unreplied Inbound
-                  </p>
-                </div>
-                {unrepliedInbound.length === 0 ? (
-                  <p className="text-[12px] text-muted-foreground italic">Inbox is clear</p>
-                ) : (
-                  <div className="space-y-2">
-                    {unrepliedInbound.map((email) => (
-                      <Link
-                        key={email.id}
-                        href="/communications"
-                        className="block p-2 -mx-2 rounded-md hover:bg-muted/40 transition-colors"
-                      >
-                        <p className="text-[12px] font-semibold truncate">
-                          {email.contact?.name || email.fromAddr}
-                        </p>
-                        <p className="text-[10px] text-violet-300 mt-0.5 truncate">
-                          {email.subject}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                <Link
-                  href="/communications"
-                  className="text-[10px] font-semibold text-primary hover:underline mt-3 inline-flex items-center gap-0.5"
-                >
-                  Open inbox <ArrowUpRight className="w-2.5 h-2.5" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── Two-col activity ─────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Recent deals */}
-          <div className="bg-card rounded-xl border border-border/60 shadow-xs overflow-hidden">
-            <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-md bg-emerald-500/10 ring-1 ring-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <TrendingUp className="w-3.5 h-3.5" strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h3 className="text-[13px] font-semibold">Recent Deals</h3>
-                  <p className="text-[10px] text-muted-foreground">Latest pipeline activity</p>
-                </div>
-              </div>
-              <Link
-                href="/sales/pipeline"
-                className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-0.5"
-              >
-                View all <ArrowUpRight className="w-3 h-3" />
-              </Link>
-            </div>
-            <div>
-              {recentDeals.length === 0 ? (
-                <div className="px-5 py-12 text-center">
-                  <div className="w-12 h-12 rounded-xl bg-muted mx-auto mb-3 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-muted-foreground/50" />
-                  </div>
-                  <p className="text-[13px] font-semibold text-muted-foreground">No deals yet</p>
-                  <Link href="/sales/pipeline" className="text-[11px] text-primary hover:underline mt-1 inline-flex items-center gap-1">
-                    <Plus className="w-3 h-3" /> Create your first deal
-                  </Link>
-                </div>
-              ) : (
-                <div className="divide-y divide-border/60">
-                  {recentDeals.map((deal) => {
-                    const stage = stageColors[deal.stage] || stageColors.lead;
-                    return (
-                      <Link
-                        key={deal.id}
-                        href={`/sales/deals/${deal.id}`}
-                        className="px-5 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors group"
-                      >
-                        <div className="w-8 h-8 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0">
-                          {deal.contact.name[0]?.toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-semibold truncate group-hover:text-primary transition-colors">
-                            {deal.title}
-                          </p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <p className="text-[11px] text-muted-foreground truncate">
-                              {deal.contact.name}
-                            </p>
-                            <span className="text-muted-foreground/40">·</span>
-                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold capitalize ${stage.text}`}>
-                              <span className={`status-dot ${stage.dot}`} />
-                              {deal.stage}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-[13px] font-bold nums-tabular">
-                            ₹{deal.value.toLocaleString()}
-                          </p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Recent tickets */}
-          <div className="bg-card rounded-xl border border-border/60 shadow-xs overflow-hidden">
-            <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-md bg-amber-500/10 ring-1 ring-amber-500/20 text-amber-400 flex items-center justify-center">
-                  <MessageSquare className="w-3.5 h-3.5" strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h3 className="text-[13px] font-semibold">Recent Tickets</h3>
-                  <p className="text-[10px] text-muted-foreground">Customer support queue</p>
-                </div>
-              </div>
-              <Link
-                href="/support/tickets"
-                className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-0.5"
-              >
-                View all <ArrowUpRight className="w-3 h-3" />
-              </Link>
-            </div>
-            <div>
-              {recentTickets.length === 0 ? (
-                <div className="px-5 py-12 text-center">
-                  <div className="w-12 h-12 rounded-xl bg-muted mx-auto mb-3 flex items-center justify-center">
-                    <Ticket className="w-5 h-5 text-muted-foreground/50" />
-                  </div>
-                  <p className="text-[13px] font-semibold text-muted-foreground">No tickets yet</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border/60">
-                  {recentTickets.map((ticket) => {
-                    const pri = priorityColors[ticket.priority] || priorityColors.low;
-                    return (
-                      <Link
-                        key={ticket.id}
-                        href={`/support/tickets/${ticket.id}`}
-                        className="px-5 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors group"
-                      >
-                        <div className="w-8 h-8 rounded-md bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center text-[11px] font-bold flex-shrink-0">
-                          {ticket.contact.name[0]?.toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-semibold truncate group-hover:text-primary transition-colors">
-                            {ticket.subject}
-                          </p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <p className="text-[11px] text-muted-foreground truncate">
-                              {ticket.contact.name}
-                            </p>
-                            <span className="text-muted-foreground/40">·</span>
-                            <span className="text-[10px] text-muted-foreground capitalize">
-                              {ticket.status.replace("_", " ")}
-                            </span>
-                          </div>
-                        </div>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-1 ${pri.bg}`}>
-                          <span className={`status-dot ${pri.dot}`} />
-                          {ticket.priority}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Quick actions row ────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            { title: "Send Mass Email", desc: "Bulk email with templates", href: "/mass-email", icon: Send, color: "violet" },
-            { title: "View Inbox", desc: "Unified messages", href: "/communications", icon: InboxIcon, color: "blue" },
-            { title: "Sales Pipeline", desc: "Manage deals", href: "/sales/pipeline", icon: TrendingUp, color: "emerald" },
-            { title: "Activity Log", desc: "Recent actions", href: "/sales/activities", icon: Activity, color: "amber" },
-          ].map((action) => {
-            const Icon = action.icon;
-            return (
-              <Link
-                key={action.href}
-                href={action.href}
-                className="group bg-card rounded-xl border border-border/60 p-4 shadow-xs hover:shadow-md hover:border-primary/30 transition-all"
-              >
-                <div className={`w-9 h-9 rounded-lg bg-${action.color}-500/10 ring-1 ring-${action.color}-500/20 text-${action.color}-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                  <Icon className="w-4 h-4" strokeWidth={2.5} />
-                </div>
-                <p className="text-[13px] font-semibold flex items-center gap-1 group-hover:text-primary transition-colors">
-                  {action.title}
-                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">{action.desc}</p>
-              </Link>
-            );
-          })}
+        <div className="flex items-center gap-2">
+          <NotificationsBell />
+          <Link
+            href={isAdminUser ? "/marketing/campaigns/new" : "/mass-email"}
+            className="h-10 px-4 rounded-xl inline-flex items-center gap-1.5 text-[13.5px] font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+          >
+            <Plus className="w-4 h-4" strokeWidth={2.2} />
+            {isAdminUser ? "New campaign" : "Send email"}
+          </Link>
         </div>
       </div>
-    </>
+
+      {/* ── Overview panel ─────────────────────── */}
+      <section aria-label="Overview" className={cn("bg-secondary rounded-[20px] p-4 sm:p-6 space-y-7", styles.rise)}>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <SearchTrigger />
+          <div className="flex flex-wrap items-center gap-1">
+            <Link href="/communications" className="h-9 px-2.5 rounded-xl inline-flex items-center gap-1.5 text-[13px] hover:bg-card transition-colors">
+              <Inbox className="w-[15px] h-[15px]" strokeWidth={1.8} /> Inbox
+            </Link>
+            <Link href="/tasks" className="h-9 px-2.5 rounded-xl inline-flex items-center gap-1.5 text-[13px] hover:bg-card transition-colors">
+              <CheckSquare className="w-[15px] h-[15px]" strokeWidth={1.8} /> Tasks
+            </Link>
+            <Link href="/campaign-analytics" className="h-9 px-2.5 rounded-xl inline-flex items-center gap-1.5 text-[13px] hover:bg-card transition-colors">
+              <BarChart3 className="w-[15px] h-[15px]" strokeWidth={1.8} /> Analytics
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-end gap-x-10 gap-y-8">
+          <div className="flex-[1_1_300px] max-w-[440px] min-w-0">
+            <EmailsChart days={data.days} />
+          </div>
+          <div className={cn("flex-[0_1_240px] flex justify-center", styles.rise)} style={{ animationDelay: "120ms" }}>
+            <Gauge value={data.openRate} label="Open rate · 30 days" />
+          </div>
+          <StatLink href="/tasks" value={<CountUp value={data.openTasks} />} delay={200}>
+            Tasks<br />in progress
+          </StatLink>
+          <StatLink href="/sales" value={<CountUp value={data.wonCount} />} delay={260}>
+            Deals<br />won so far
+          </StatLink>
+        </div>
+      </section>
+
+      {/* ── Summary cards (animated graphics) ─── */}
+      <div className="grid grid-cols-1 min-[440px]:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+        <KpiCard
+          label="Emails sent"
+          href="/campaign-analytics"
+          icon={Send}
+          value={sumOf(data.kpis.emails.series)}
+          series={data.kpis.emails.series}
+          previous={data.kpis.emails.previous}
+          graphic={<MiniBars series={data.kpis.emails.series} />}
+          caption="Per day, last 14 days"
+          delay={60}
+        />
+        <KpiCard
+          label="Contacts"
+          href="/contacts"
+          icon={Users}
+          value={data.contactTotal}
+          series={data.kpis.contacts.series}
+          previous={data.kpis.contacts.previous}
+          graphic={<Sparkline series={cumulative(data.kpis.contacts.series)} />}
+          caption={`${sumOf(data.kpis.contacts.series).toLocaleString()} added in 14 days`}
+          delay={120}
+        />
+        <KpiCard
+          label="Revenue won"
+          href="/sales"
+          icon={IndianRupee}
+          value={data.revenue / 1000}
+          decimals={1}
+          prefix="₹"
+          suffix="k"
+          series={data.kpis.revenue.series}
+          previous={data.kpis.revenue.previous}
+          graphic={<RingMeter pct={winShare} caption="of deal value won" />}
+          caption={`₹${(sumOf(data.kpis.revenue.series) / 1000).toFixed(1)}k in the last 14 days`}
+          delay={180}
+        />
+        <KpiCard
+          label="Tickets"
+          href="/support/tickets"
+          icon={Ticket}
+          value={data.openTickets}
+          series={data.kpis.tickets.series}
+          previous={data.kpis.tickets.previous}
+          graphic={<MeterBar value={data.openTickets} total={data.ticketTotal} label="open" rest="closed" />}
+          caption={`${sumOf(data.kpis.tickets.series)} opened in 14 days`}
+          invert
+          delay={240}
+        />
+      </div>
+
+      {/* ── Graphs ────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)] gap-4">
+        <section
+          aria-label="Email activity"
+          className={cn("bg-card rounded-2xl border border-border p-4 sm:p-5 min-w-0", styles.rise)}
+          style={{ animationDelay: "120ms" }}
+        >
+          <ActivityChart days={data.activity} />
+        </section>
+        <section
+          aria-label="Deal pipeline"
+          className={cn("bg-card rounded-2xl border border-border p-4 sm:p-5 min-w-0", styles.rise)}
+          style={{ animationDelay: "200ms" }}
+        >
+          <PipelineDonut slices={data.pipeline} />
+        </section>
+      </div>
+
+      {/* ── Campaigns ─────────────────────────── */}
+      {isAdminUser && (
+        <TableCard
+          id="campaigns-heading"
+          title="Campaigns"
+          toolbar={
+            <>
+              {(["active", "scheduled", "draft"] as const).map((s) =>
+                statusCounts[s] ? (
+                  <StatusPill key={s} tone={campaignTone[s]} icon={null}>
+                    {statusCounts[s]} {s}
+                  </StatusPill>
+                ) : null
+              )}
+            </>
+          }
+          actions={
+            <Link
+              href="/marketing/campaigns/new"
+              className="h-9 px-3.5 rounded-lg inline-flex items-center gap-1.5 text-[13px] font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-4 h-4" strokeWidth={2.2} /> New campaign
+            </Link>
+          }
+          footer={
+            <>
+              <span>Showing {data.campaigns.length} of {data.campaignTotal.toLocaleString()} campaigns</span>
+              <ViewAll href="/marketing/campaigns">All campaigns</ViewAll>
+            </>
+          }
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className={firstColumn}>Campaign</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Schedule</TableHead>
+                <TableHead className="text-right">Sent</TableHead>
+                <TableHead className="text-right">Open rate</TableHead>
+                <TableHead className="text-right">Click rate</TableHead>
+                <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.campaigns.length === 0 && (
+                <EmptyRow colSpan={7}>
+                  <SendIllustration className="w-[160px] mx-auto mb-2" />
+                  No campaigns yet.{" "}
+                  <Link href="/marketing/campaigns/new" className="font-semibold text-primary hover:underline">Create your first one</Link>
+                </EmptyRow>
+              )}
+              {data.campaigns.map((c, i) => {
+                const label = c.status === "scheduled" ? "Scheduled for" : c.sentAt ? "Sent" : "Created";
+                const date = c.status === "scheduled" ? c.scheduledFor : c.sentAt || c.createdAt;
+                return (
+                  <TableRow key={c.id} className="animate-row-in" style={rowDelay(i)}>
+                    <TableCell className={cn(firstColumn, "max-w-[320px]")}>
+                      <Link href={`/marketing/campaigns/${c.id}`} className="flex items-center gap-3 min-w-0 group">
+                        <span className="w-8 h-8 rounded-full bg-secondary text-[var(--primary-text)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+                          <Mail className="w-4 h-4" strokeWidth={1.8} />
+                        </span>
+                        <span className="min-w-0 leading-tight">
+                          <span className="block font-medium truncate group-hover:underline underline-offset-2">{c.name}</span>
+                          <span className="block text-[12px] text-muted-foreground truncate mt-0.5">{c.subject || "No subject yet"}</span>
+                        </span>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <StatusPill tone={campaignTone[c.status] || "neutral"}>{c.status}</StatusPill>
+                    </TableCell>
+                    <TableCell>
+                      <IdCell id={label} date={ymd(date) || "—"} />
+                    </TableCell>
+                    <TableCell className="text-right nums-tabular text-muted-foreground">{c.sentCount.toLocaleString()}</TableCell>
+                    <TableCell className="text-right text-muted-foreground"><RateCell value={c.openRate} /></TableCell>
+                    <TableCell className="text-right text-muted-foreground"><RateCell value={c.clickRate} /></TableCell>
+                    <TableCell className="text-right">
+                      <RowAction href={`/marketing/campaigns/${c.id}`} label={`Open ${c.name}`} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableCard>
+      )}
+
+      {/* ── Needs attention ───────────────────── */}
+      {attention.length > 0 && (
+        <TableCard
+          id="attention-heading"
+          title="Needs attention"
+          toolbar={<span className="text-[12.5px] text-muted-foreground">Stale leads, overdue tasks and unreplied emails</span>}
+          footer={
+            <>
+              <span>{attention.length} items</span>
+              <span className="flex flex-wrap gap-4">
+                <ViewAll href="/marketing/leads">Leads</ViewAll>
+                <ViewAll href="/tasks">Tasks</ViewAll>
+                <ViewAll href="/communications">Inbox</ViewAll>
+              </span>
+            </>
+          }
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className={firstColumn}>Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Detail</TableHead>
+                <TableHead>When</TableHead>
+                <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {attention.map((row, i) => (
+                <TableRow key={row.key} className="animate-row-in" style={rowDelay(i)}>
+                  <TableCell className={cn(firstColumn, "max-w-[300px]")}>
+                    {row.kind === "task" ? (
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-8 h-8 rounded-full bg-secondary text-[var(--primary-text)] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+                          <CheckSquare className="w-4 h-4" strokeWidth={1.8} />
+                        </span>
+                        <span className="font-medium truncate">{row.name}</span>
+                      </div>
+                    ) : (
+                      <PersonCell name={row.name} email={row.sub} />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill tone={attentionPill[row.kind].tone}>{attentionPill[row.kind].label}</StatusPill>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground max-w-[320px] truncate">{row.detail}</TableCell>
+                  <TableCell className="text-muted-foreground nums-tabular">{row.when}</TableCell>
+                  <TableCell className="text-right">
+                    <RowAction href={row.href} label={`Open ${row.name}`} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableCard>
+      )}
+
+      {/* ── Recent deals ──────────────────────── */}
+      <TableCard
+        id="deals-heading"
+        title="Recent deals"
+        actions={<Link href="/sales/pipeline" className={toolbarButton}>Pipeline</Link>}
+        footer={
+          <>
+            <span>Latest {data.recentDeals.length} deals</span>
+            <ViewAll href="/sales/pipeline">View all deals</ViewAll>
+          </>
+        }
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className={firstColumn}>Contact</TableHead>
+              <TableHead>Deal</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Stage</TableHead>
+              <TableHead className="text-right">Value</TableHead>
+              <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.recentDeals.length === 0 && (
+              <EmptyRow colSpan={6}>
+                No deals yet.{" "}
+                <Link href="/sales/pipeline" className="font-semibold text-primary hover:underline">Create your first deal</Link>
+              </EmptyRow>
+            )}
+            {data.recentDeals.map((deal, i) => (
+              <TableRow key={deal.id} className="animate-row-in" style={rowDelay(i)}>
+                <TableCell className={firstColumn}>
+                  <PersonCell name={deal.contact.name} email={deal.contact.email} href={`/contacts/${deal.contact.id}`} />
+                </TableCell>
+                <TableCell className="max-w-[260px]">
+                  <LinkCell href={`/sales/deals/${deal.id}`} icon={<Briefcase className="w-3.5 h-3.5" strokeWidth={1.8} />}>
+                    {deal.title}
+                  </LinkCell>
+                </TableCell>
+                <TableCell><IdCell id={ymd(deal.createdAt)} /></TableCell>
+                <TableCell><StatusPill tone={stageTone[deal.stage] || "neutral"}>{deal.stage}</StatusPill></TableCell>
+                <TableCell className="text-right font-semibold nums-tabular">₹{deal.value.toLocaleString()}</TableCell>
+                <TableCell className="text-right">
+                  <RowAction href={`/sales/deals/${deal.id}`} label={`Open ${deal.title}`} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableCard>
+
+      {/* ── Recent tickets ────────────────────── */}
+      <TableCard
+        id="tickets-heading"
+        title="Recent tickets"
+        actions={<Link href="/support/tickets" className={toolbarButton}>Support queue</Link>}
+        footer={
+          <>
+            <span>{data.openTickets} open · latest {data.recentTickets.length} shown</span>
+            <ViewAll href="/support/tickets">View all tickets</ViewAll>
+          </>
+        }
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className={firstColumn}>Contact</TableHead>
+              <TableHead>Subject</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.recentTickets.length === 0 && <EmptyRow colSpan={6}>No tickets yet.</EmptyRow>}
+            {data.recentTickets.map((ticket, i) => (
+              <TableRow key={ticket.id} className="animate-row-in" style={rowDelay(i)}>
+                <TableCell className={firstColumn}>
+                  <PersonCell name={ticket.contact.name} email={ticket.contact.email} href={`/contacts/${ticket.contact.id}`} />
+                </TableCell>
+                <TableCell className="max-w-[320px] truncate text-muted-foreground">{ticket.subject}</TableCell>
+                <TableCell><IdCell id={ymd(ticket.createdAt)} /></TableCell>
+                <TableCell><StatusPill tone={priorityTone[ticket.priority] || "neutral"} icon={null}>{ticket.priority}</StatusPill></TableCell>
+                <TableCell>
+                  <StatusPill tone={ticketStatusTone[ticket.status] || "neutral"}>{ticket.status.replace("_", " ")}</StatusPill>
+                </TableCell>
+                <TableCell className="text-right">
+                  <RowAction href={`/support/tickets/${ticket.id}`} label={`Open ticket ${ticket.subject}`} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableCard>
+    </div>
   );
 }

@@ -98,6 +98,24 @@
   transform-origin: center;
   animation: envelopeFly 4.8s cubic-bezier(0.4, 0, 0.3, 1) infinite both;
 }
+/* Arc from the laptop (452,300) to the receiver's phone (104,279).
+   Same 4.8s cycle as the phone, landing at 90%. */
+.envelopeArc {
+  transform-origin: center;
+  animation: envelopeArc 4.8s ease-in-out infinite both;
+}
+.phoneBadge {
+  transform-origin: center;
+  animation: phoneBadge 4.8s ease-out 1.2s infinite both;
+}
+.phoneScreen {
+  animation: phoneScreen 4.8s ease-out 1.2s infinite both;
+}
+.waveArm {
+  transform-origin: 100% 100%;
+  animation: waveArm 4.8s ease-in-out 1.2s infinite;
+}
+
 .sway {
   transform-origin: 50% 100%;
   animation: sway 4s ease-in-out infinite;
@@ -191,6 +209,29 @@
   50% { opacity: 1; transform: translate(70px, -110px) scale(1) rotate(-14deg); }
   85% { opacity: 0.9; transform: translate(115px, -190px) scale(0.95) rotate(6deg); }
   100% { opacity: 0; transform: translate(130px, -225px) scale(0.85) rotate(10deg); }
+}
+@keyframes envelopeArc {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0deg); }
+  10% { opacity: 1; transform: translate(-40px, -90px) scale(0.8) rotate(-8deg); }
+  45% { opacity: 1; transform: translate(-175px, -255px) scale(1) rotate(-14deg); }
+  78% { opacity: 1; transform: translate(-305px, -120px) scale(0.85) rotate(-22deg); }
+  90% { opacity: 0; transform: translate(-348px, -21px) scale(0.35) rotate(-10deg); }
+  100% { opacity: 0; transform: translate(-348px, -21px) scale(0.35) rotate(-10deg); }
+}
+@keyframes phoneBadge {
+  0%, 88% { transform: scale(0.4); opacity: 0.35; }
+  93% { transform: scale(1.35); opacity: 1; }
+  97%, 100% { transform: scale(1); opacity: 1; }
+}
+@keyframes phoneScreen {
+  0%, 88%, 100% { fill: #fff; }
+  92% { fill: #e7e0ff; }
+}
+@keyframes waveArm {
+  0%, 92%, 100% { transform: rotate(0deg); }
+  94% { transform: rotate(-14deg); }
+  96% { transform: rotate(8deg); }
+  98% { transform: rotate(-8deg); }
 }
 @keyframes sway {
   0%, 100% { transform: rotate(-5deg); }

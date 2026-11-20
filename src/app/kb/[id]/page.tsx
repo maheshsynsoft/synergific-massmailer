@@ -40,8 +40,8 @@ export default function KbArticlePage() {
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-[900px] mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/kb" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg gradient-brand flex items-center justify-center shadow-glow-strong">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-glow-strong">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
               <p className="text-[15px] font-bold">Synergific Help</p>

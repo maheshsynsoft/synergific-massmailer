@@ -69,7 +69,7 @@ export default function ActivitiesPage() {
   return (
     <>
       <Header title="Activities" />
-      <div className="p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-4">
         <div className="flex justify-end">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger render={<Button />}>+ Log Activity</DialogTrigger>
@@ -130,11 +130,11 @@ export default function ActivitiesPage() {
           ) : (
             activities.map((a) => (
               <Card key={a.id}>
-                <CardContent className="flex items-start gap-4 py-4">
+                <CardContent className="flex items-start gap-3 sm:gap-4 py-4">
                   <Badge variant="outline" className="mt-0.5">{a.type}</Badge>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm">{a.description}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-xs text-muted-foreground">
                       <span>{a.user.name}</span>
                       <span>-</span>
                       <Link href={`/contacts/${a.contact.id}`} className="text-blue-600 hover:underline">{a.contact.name}</Link>

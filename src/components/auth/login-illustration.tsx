@@ -7,9 +7,15 @@ const HAIR = "#232647";
 const SHIRT = "#f08a7a";
 const JEANS = "#40609f";
 
-function Envelope({ delay }: { delay: number }) {
+// Second person (standing, receiving on a phone)
+const SKIN_2 = "#c98e6b";
+const HAIR_2 = "#4a2f27";
+const SHIRT_2 = "#7d9ce8";
+const PANTS_2 = "#2b3354";
+
+function Envelope({ delay, arc = false }: { delay: number; arc?: boolean }) {
   return (
-    <g className={s.envelope} style={d(delay)}>
+    <g className={arc ? s.envelopeArc : s.envelope} style={d(delay)}>
       <rect x={-15} y={-10} width={30} height={20} rx={3.5} fill="#fff" stroke="#7c6cf0" strokeWidth={1.6} />
       <path d="M-14 -8.5 L0 2 L14 -8.5" fill="none" stroke="#7c6cf0" strokeWidth={1.6} strokeLinejoin="round" />
     </g>
@@ -28,12 +34,79 @@ function Sparkle({ x, y, size = 8, color = "#fff", delay = 0 }: { x: number; y: 
   );
 }
 
-/** Fully animated "person signing in" scene. Pure SVG + CSS, no deps. */
+/** Standing person who waves and receives the mail on a phone. */
+function Receiver() {
+  return (
+    <g>
+      <ellipse className={s.groundShadow} style={d(-1.2)} cx={86} cy={488} rx={54} ry={9} fill="#d4cbef" />
+
+      {/* legs + shoes */}
+      <path d="M60 358 H85 L82 474 H66 Z" fill={PANTS_2} />
+      <path d="M87 358 H112 L106 474 H90 Z" fill={PANTS_2} />
+      <path d="M66 470 H84 V487 H50 Q49 476 66 470 Z" fill="#2b2e3f" />
+      <path d="M90 470 H107 Q123 474 122 487 H90 Z" fill="#2b2e3f" />
+
+      {/* torso */}
+      <path d="M58 248 C60 236 72 228 86 228 C100 228 112 236 114 248 L118 366 L54 366 Z" fill={SHIRT_2} />
+      <rect x={80} y={208} width={12} height={26} rx={5} fill={SKIN_2} />
+      <path d="M76 230 Q86 242 96 230" fill="none" stroke="#fff" strokeWidth={4.5} strokeLinecap="round" />
+
+      {/* waving arm */}
+      <g className={s.waveArm}>
+        <path d="M62 250 Q44 242 40 226" fill="none" stroke={SHIRT_2} strokeWidth={18} strokeLinecap="round" />
+        <path d="M40 228 L38 194" fill="none" stroke={SKIN_2} strokeWidth={12} strokeLinecap="round" />
+        <circle cx={38} cy={188} r={8} fill={SKIN_2} />
+      </g>
+
+      {/* head */}
+      <g className={s.head} style={d(-2)}>
+        <circle cx={88} cy={158} r={12} fill={HAIR_2} />
+        <path d="M63 196 C57 162 115 158 109 196 L111 214 C100 221 72 221 61 214 Z" fill={HAIR_2} />
+        <ellipse cx={86} cy={192} rx={23} ry={26} fill={SKIN_2} />
+        <ellipse cx={63} cy={196} rx={4} ry={6} fill={SKIN_2} />
+        <ellipse cx={109} cy={196} rx={4} ry={6} fill={SKIN_2} />
+        <path d="M75 184 Q80 181 85 183" fill="none" stroke={HAIR_2} strokeWidth={2} strokeLinecap="round" />
+        <path d="M91 183 Q96 181 101 184" fill="none" stroke={HAIR_2} strokeWidth={2} strokeLinecap="round" />
+        <ellipse className={s.blink} style={d(-1.5)} cx={81} cy={194} rx={2.6} ry={3.4} fill={HAIR_2} />
+        <ellipse className={s.blink} style={d(-1.5)} cx={96} cy={194} rx={2.6} ry={3.4} fill={HAIR_2} />
+        <circle cx={74} cy={203} r={4} fill="#f39a8c" opacity={0.45} />
+        <circle cx={101} cy={203} r={4} fill="#f39a8c" opacity={0.45} />
+        <path d="M81 207 Q88 213 95 207" fill="none" stroke="#9c4436" strokeWidth={2.2} strokeLinecap="round" />
+        <path d="M63 192 C60 166 84 158 98 162 C110 166 114 180 110 194 C104 180 94 174 86 174 C78 180 70 186 63 192 Z" fill={HAIR_2} />
+      </g>
+
+      {/* phone arm + phone */}
+      <path d="M110 248 C121 264 125 286 120 304" fill="none" stroke={SHIRT_2} strokeWidth={18} strokeLinecap="round" />
+      <g>
+        <rect x={92} y={260} width={24} height={40} rx={5} fill="#2b2e3f" />
+        <rect className={s.phoneScreen} x={95} y={264} width={18} height={31} rx={3} fill="#fff" />
+        <rect x={98} y={274} width={12} height={9} rx={1.5} fill="none" stroke="#7c6cf0" strokeWidth={1.4} />
+        <path d="M98.5 275 L104 279 L109.5 275" fill="none" stroke="#7c6cf0" strokeWidth={1.4} strokeLinejoin="round" />
+        <circle className={s.phoneBadge} cx={116} cy={260} r={6} fill="#f39a8c" />
+      </g>
+      <path d="M120 302 C116 298 110 295 104 293" fill="none" stroke={SKIN_2} strokeWidth={12} strokeLinecap="round" />
+      <circle cx={103} cy={293} r={7} fill={SKIN_2} />
+    </g>
+  );
+}
+
+/** Fully animated scene: one person sends mail from a laptop, another
+ *  receives it on a phone. Pure SVG + CSS, no deps. */
 export function LoginIllustration({ className }: { className?: string }) {
   const typed = [0, 1, 2, 3, 4, 5];
 
   return (
-    <svg viewBox="0 0 480 520" className={`${s.scene} ${className ?? ""}`} shapeRendering="geometricPrecision" role="img" aria-label="Person signing in on a laptop">
+    <svg viewBox="0 0 600 520" className={`${s.scene} ${className ?? ""}`} shapeRendering="geometricPrecision" role="img" aria-label="Two people: one sends email from a laptop, the other receives it on a phone">
+      {/* ── Receiver (left) ────────────────────────────── */}
+      <g className={s.pop} style={d(0.1)}>
+        <rect x={8} y={150} width={150} height={300} rx={42} fill="#d9caf1" />
+      </g>
+      <g className={s.pop} style={d(0.8)}>
+        <Receiver />
+      </g>
+
+      {/* Everything below is the original sender scene, shifted right */}
+      <g transform="translate(120 0)">
       {/* ── Pastel colour blocks ───────────────────────── */}
       <g className={s.pop} style={d(0.15)}>
         <rect x={18} y={40} width={150} height={400} rx={42} fill="#f8dca9" />
@@ -176,7 +249,6 @@ export function LoginIllustration({ className }: { className?: string }) {
 
       {/* ── Envelopes flying out of the laptop ─────────── */}
       <g transform="translate(340 300)">
-        <Envelope delay={1.2} />
         <Envelope delay={2.8} />
         <Envelope delay={4.4} />
       </g>
@@ -188,6 +260,15 @@ export function LoginIllustration({ className }: { className?: string }) {
       <Sparkle x={40} y={20} size={6} delay={2} />
       <circle className={s.floatAlt} cx={448} cy={250} r={6} fill="#a2d6ab" />
       <circle className={s.float} cx={232} cy={176} r={4} fill="#f8dca9" />
+      </g>
+
+      {/* ── Envelope arcing over to the receiver's phone ── */}
+      <g transform="translate(452 300)">
+        <Envelope delay={1.2} arc />
+      </g>
+
+      <Sparkle x={34} y={110} size={7} color="#f39a8c" delay={1.1} />
+      <Sparkle x={140} y={128} size={5} color="#fff" delay={2.4} />
     </svg>
   );
 }

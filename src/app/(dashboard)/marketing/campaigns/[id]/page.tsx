@@ -156,7 +156,7 @@ export default function CampaignDetailPage() {
     router.push("/marketing/campaigns");
   }
 
-  if (!campaign) return <div className="p-8">Loading...</div>;
+  if (!campaign) return <div className="p-4 sm:p-6 lg:p-8">Loading...</div>;
 
   const status = statusMeta[campaign.status] || statusMeta.draft;
 
@@ -203,7 +203,7 @@ export default function CampaignDetailPage() {
                 <button
                   onClick={handleSendNow}
                   disabled={sending || !campaign.subject || !campaign.content}
-                  className="h-8 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold gradient-brand text-white shadow-glow hover:shadow-glow-strong disabled:opacity-50"
+                  className="h-8 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold bg-primary text-primary-foreground shadow-glow hover:shadow-glow-strong disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
                   {sending ? "Sending..." : "Send Now"}
@@ -221,7 +221,7 @@ export default function CampaignDetailPage() {
                 <button
                   onClick={handleSendNow}
                   disabled={sending}
-                  className="h-8 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold gradient-brand text-white shadow-glow"
+                  className="h-8 px-3 rounded-md flex items-center gap-1.5 text-[12px] font-semibold bg-primary text-primary-foreground shadow-glow"
                 >
                   <Send className="w-3.5 h-3.5" /> Send Now
                 </button>
@@ -260,7 +260,7 @@ export default function CampaignDetailPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1200px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1200px]">
         {/* Status banner */}
         <div className="flex items-center gap-3 flex-wrap">
           <span className={cn("inline-flex items-center gap-1.5 text-[12px] font-bold px-2.5 py-1 rounded-md", status.bg, status.text)}>

@@ -88,7 +88,7 @@ export default function DigestPreviewPage() {
         }
       />
 
-      <div className="p-8 space-y-5 animate-fade-in max-w-[1200px]">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 animate-fade-in max-w-[1200px]">
         {sendResult && (
           <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-lg px-3 py-2 text-[12px]">
             {sendResult}

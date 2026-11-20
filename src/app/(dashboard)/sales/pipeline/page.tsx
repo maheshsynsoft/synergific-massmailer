@@ -157,7 +157,7 @@ export default function PipelinePage() {
                     <Label>Deal title *</Label>
                     <Input name="title" required placeholder="e.g. Enterprise License" />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Value ($)</Label>
                       <Input name="value" type="number" step="0.01" placeholder="10000" />
@@ -201,8 +201,9 @@ export default function PipelinePage() {
         }
       />
 
-      <div className="p-6 animate-fade-in">
-        <div className="grid grid-cols-6 gap-3">
+      <div className="p-4 sm:p-6 animate-fade-in">
+        {/* Board scrolls sideways inside its own box; columns never shrink below 240px */}
+        <div className="grid grid-flow-col auto-cols-[minmax(240px,1fr)] gap-3 overflow-x-auto scrollbar-thin pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
           {STAGES.map((stage) => {
             const stageDeals = filtered.filter((d) => d.stage === stage.key);
             const stageValue = stageDeals.reduce((sum, d) => sum + d.value, 0);
@@ -285,7 +286,7 @@ export default function PipelinePage() {
                           {/* Owner */}
                           {deal.owner && (
                             <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/40">
-                              <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-[9px] font-bold">
+                              <div className="w-5 h-5 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-bold">
                                 {deal.owner.name[0]?.toUpperCase()}
                               </div>
                               <p className="text-[10px] text-muted-foreground truncate">{deal.owner.name}</p>

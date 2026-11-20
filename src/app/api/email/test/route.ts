@@ -33,8 +33,6 @@ export async function GET() {
   const tokenData = await tokenRes.json();
   const token = tokenData.access_token;
 
-  // Test the sendMail endpoint with a draft (doesn't actually send)
-  // Try fetching user info first
   const userRes = await fetch(`https://graph.microsoft.com/v1.0/users/${senderEmail}?$select=displayName,mail,userPrincipalName`, {
     headers: { Authorization: `Bearer ${token}` },
   });

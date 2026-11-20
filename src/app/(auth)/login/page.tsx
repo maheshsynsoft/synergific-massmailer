@@ -1,15 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, AlertCircle, ArrowRight, CheckCircle2 } from "lucide-react";
+import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, Check } from "lucide-react";
+import { LoginIllustration } from "@/components/auth/login-illustration";
+import s from "@/components/auth/auth.module.css";
+
+const REMEMBER_KEY = "login-remember-email";
+const delay = (sec: number) => ({ animationDelay: `${sec}s` });
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [errorKey, setErrorKey] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const rememberRef = useRef<HTMLInputElement>(null);
+
+  // Prefill a remembered email (written straight to the DOM inputs)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(REMEMBER_KEY);
+      if (saved && emailRef.current && rememberRef.current) {
+        emailRef.current.value = saved;
+        rememberRef.current.checked = true;
+      }
+    } catch {}
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -17,6 +37,12 @@ export default function LoginPage() {
     setError("");
 
     const formData = new FormData(e.currentTarget);
+
+    try {
+      if (formData.get("remember")) localStorage.setItem(REMEMBER_KEY, String(formData.get("email") ?? ""));
+      else localStorage.removeItem(REMEMBER_KEY);
+    } catch {}
+
     const result = await signIn("credentials", {
       email: formData.get("email"),
       password: formData.get("password"),
@@ -25,6 +51,7 @@ export default function LoginPage() {
 
     if (result?.error) {
       setError("Invalid email or password");
+      setErrorKey((k) => k + 1);
       setLoading(false);
     } else {
       router.push("/dashboard");
@@ -32,174 +59,138 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* ── LEFT: Brand panel ────────────── */}
-      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
-        <div className="absolute inset-0 gradient-brand" />
-        <div className="absolute inset-0 bg-grid bg-grid-fade opacity-20" />
-
-        {/* Floating orbs */}
-        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full bg-violet-300/20 blur-3xl" />
-
-        <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
-          {/* Top: Logo */}
-          <Link href="/" className="inline-flex items-center gap-3 group">
-            <img
-              src="/logo.png"
-              alt="Synergific Software"
-              className="h-12 w-auto rounded-lg bg-white/15 backdrop-blur-lg border border-white/20 p-1 group-hover:scale-105 transition-transform"
-            />
-            <div>
-              <p className="text-[16px] font-bold tracking-tight">Synergific</p>
-              <p className="text-[10px] text-white/70 tracking-wider uppercase font-semibold">AI Business Suite</p>
-            </div>
-          </Link>
-
-          {/* Middle: Hero text */}
-          <div className="max-w-lg">
-            <h2 className="text-[44px] font-bold leading-[1.1] tracking-tight mb-4">
-              Marketing, sales &amp; support — on autopilot.
-            </h2>
-            <p className="text-[15px] text-white/80 leading-relaxed mb-8">
-              Send mass emails with AI-personalized copy. Get smart replies, automatic follow-ups,
-              and intelligent classification — all powered by Claude.
-            </p>
-
-            <ul className="space-y-3">
-              {[
-                "AI-powered reply classification",
-                "Auto follow-ups when no reply in 5 days",
-                "Unified inbox: email + WhatsApp",
-                "200+ Synergific training templates ready",
-              ].map((feature) => (
-                <li key={feature} className="flex items-center gap-2.5 text-[13px] text-white/90">
-                  <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-2.5 h-2.5" strokeWidth={3} />
-                  </div>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Bottom: Stats */}
-          <div className="grid grid-cols-3 gap-4 max-w-md">
-            <div>
-              <p className="text-2xl font-bold">500+</p>
-              <p className="text-[10px] text-white/60 uppercase tracking-wider font-semibold mt-0.5">Clients</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">200+</p>
-              <p className="text-[10px] text-white/60 uppercase tracking-wider font-semibold mt-0.5">Courses</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold">50+</p>
-              <p className="text-[10px] text-white/60 uppercase tracking-wider font-semibold mt-0.5">Partners</p>
-            </div>
-          </div>
+    <div className={`${s.root} min-h-screen grid md:grid-cols-2 bg-card`}>
+      {/* ── Left: animation (top on mobile) ─────────── */}
+      <div className="relative flex flex-col items-center justify-center bg-[#efe9fc] px-6 pt-8 pb-6 md:p-10">
+        <LoginIllustration className="w-full max-w-[250px] sm:max-w-[340px] md:max-w-[520px] h-auto" />
+        <div className={`${s.rise} text-center mt-3 md:mt-6`} style={delay(0.9)}>
+          <p className="text-[14px] md:text-[16px] font-semibold text-[#3b3363]">Reach every inbox, effortlessly.</p>
+          <p className="text-[12px] md:text-[13px] text-[#6b6590] mt-1">AI-personalised campaigns, replies &amp; follow-ups.</p>
         </div>
       </div>
 
-      {/* ── RIGHT: Form ──────────────────── */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-[400px]">
-          {/* Mobile branding */}
-          <div className="lg:hidden flex items-center gap-2.5 mb-10">
-            <div className="w-9 h-9 rounded-lg gradient-brand flex items-center justify-center shadow-glow">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none">
-                <path
-                  d="M16 6H10C8.34315 6 7 7.34315 7 9C7 10.6569 8.34315 12 10 12H14C15.6569 12 17 13.3431 17 15C17 16.6569 15.6569 18 14 18H8"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold">Synergific</p>
-              <p className="text-[10px] text-muted-foreground tracking-wider uppercase">AI Suite</p>
-            </div>
+      {/* ── Right: login form ───────────────────────── */}
+      <div className="flex items-center justify-center px-6 py-10 sm:px-12">
+        <div className="w-full max-w-[420px]">
+          <div className={s.rise} style={delay(0.25)}>
+            <Link href="/" className="inline-block">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-1.jpeg" alt="Synergific Software" className="h-10 w-auto dark:hidden" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="Synergific Software" className="h-10 w-auto hidden dark:block" />
+            </Link>
+            <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-muted-foreground mt-3">AI Business Suite</p>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-[28px] font-bold tracking-tight">Sign in</h2>
-            <p className="text-[14px] text-muted-foreground mt-1">
-              Welcome back. Enter your credentials below.
+          <div className={`${s.rise} mt-10`} style={delay(0.35)}>
+            <h1 className={`text-primary text-[34px] sm:text-[38px] font-bold leading-[1.1] tracking-tight`}>Welcome back</h1>
+            <p className="text-[14px] text-muted-foreground mt-2 leading-relaxed">
+              Good to see you again. Sign in to your account to continue.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="mt-8">
             {error && (
-              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[13px] px-3.5 py-2.5 rounded-lg flex items-center gap-2 animate-fade-in">
+              <div
+                key={errorKey}
+                role="alert"
+                className={`${s.shake} mb-4 bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-300 text-[13px] px-3.5 py-2.5 rounded-lg flex items-center gap-2`}
+              >
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 {error}
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="text-[12px] font-semibold text-foreground">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            {/* Grouped fields */}
+            <div className={`${s.rise} rounded-xl border border-border bg-background/40 overflow-hidden shadow-sm`} style={delay(0.45)}>
+              <div className={`${s.field} px-4 pt-2.5 pb-2 focus-within:bg-primary/[0.04]`}>
+                <label htmlFor="email" className="block text-[11px] font-medium text-muted-foreground">
+                  Email address
+                </label>
                 <input
                   id="email"
                   name="email"
                   type="email"
+                  autoComplete="email"
                   required
+                  ref={emailRef}
                   placeholder="you@company.com"
-                  className="w-full h-11 pl-10 pr-3 text-[13px] rounded-lg border border-border bg-background focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
+                  className="w-full bg-transparent text-[14px] font-medium text-foreground placeholder:text-muted-foreground/50 py-1 focus:outline-none"
                 />
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-[12px] font-semibold text-foreground">
+              <div className="h-px bg-border" />
+              <div className={`${s.field} px-4 pt-2.5 pb-2 focus-within:bg-primary/[0.04]`}>
+                <label htmlFor="password" className="block text-[11px] font-medium text-muted-foreground">
                   Password
                 </label>
-                <Link href="#" className="text-[11px] text-primary hover:underline font-semibold">
-                  Forgot?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  className="w-full h-11 pl-10 pr-3 text-[13px] rounded-lg border border-border bg-background focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    placeholder="••••••••"
+                    className="w-full bg-transparent text-[14px] font-medium text-foreground placeholder:text-muted-foreground/50 py-1 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="p-1 -mr-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 rounded-lg gradient-brand text-white font-semibold text-[13px] shadow-glow hover:shadow-glow-strong transition-all disabled:opacity-60 flex items-center justify-center gap-2 group"
-            >
-              {loading ? (
-                "Signing in..."
-              ) : (
-                <>
-                  Sign in
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </>
-              )}
-            </button>
+            <div className={`${s.rise} flex items-center justify-between mt-4`} style={delay(0.55)}>
+              <label className="flex items-center gap-2 cursor-pointer select-none group">
+                <input
+                  type="checkbox"
+                  name="remember"
+                  ref={rememberRef}
+                  className="peer sr-only"
+                />
+                <span className="w-4 h-4 rounded-[5px] border border-border bg-background flex items-center justify-center transition-all peer-checked:bg-primary peer-checked:border-primary peer-checked:[&>svg]:scale-100 peer-focus-visible:ring-2 peer-focus-visible:ring-primary/30 group-hover:border-primary/60">
+                  <Check className="w-3 h-3 text-white scale-0 transition-transform" strokeWidth={3} />
+                </span>
+                <span className="text-[13px] text-muted-foreground">Remember me</span>
+              </label>
+              <Link href="#" className="text-[13px] text-muted-foreground hover:text-primary transition-colors">
+                Forgot password?
+              </Link>
+            </div>
+
+            <div className={`${s.rise} grid grid-cols-2 gap-3 mt-8`} style={delay(0.65)}>
+              <button
+                type="submit"
+                disabled={loading}
+                className={`h-11 rounded-lg bg-primary text-primary-foreground font-semibold text-[12px] tracking-[0.12em] uppercase shadow-sm hover:bg-primary/90 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-70 disabled:hover:translate-y-0 flex items-center justify-center gap-2 group`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Signing in
+                  </>
+                ) : (
+                  <>
+                    Login
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </button>
+              <Link
+                href="/register"
+                className="h-11 rounded-lg border border-border text-foreground/80 font-semibold text-[12px] tracking-[0.12em] uppercase flex items-center justify-center hover:border-primary hover:text-primary hover:-translate-y-0.5 transition-all"
+              >
+                Sign up
+              </Link>
+            </div>
           </form>
 
-          <p className="text-center text-[13px] text-muted-foreground mt-8">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary font-semibold hover:underline">
-              Create one
-            </Link>
-          </p>
-
-          <p className="text-center text-[10px] text-muted-foreground/70 mt-12">
+          <p className={`${s.rise} text-[11px] text-muted-foreground/70 mt-12`} style={delay(0.8)}>
             © {new Date().getFullYear()} Synergific Software Pvt. Ltd. — We make IT happen.
           </p>
         </div>

@@ -1,0 +1,189 @@
+/* ── Auth pages: form helpers + animated illustration ───────────── */
+
+.root {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.rise {
+  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.shake {
+  animation: shake 0.45s ease-in-out both;
+}
+
+/* Grouped fields with sliding accent bar (left edge) */
+.field {
+  position: relative;
+  transition: background-color 0.25s ease;
+}
+.field::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.field:focus-within::before {
+  transform: scaleY(1);
+}
+
+/* ── SVG illustration ─────────────────────────────────────────────── */
+
+.scene :where(g, rect, circle, ellipse, path) {
+  transform-box: fill-box;
+}
+
+.pop {
+  transform-origin: center;
+  animation: pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+.floatAlt {
+  animation: float 7.5s ease-in-out -2s infinite;
+}
+.spin {
+  transform-origin: center;
+  animation: spin 14s linear infinite;
+}
+.typeDot {
+  transform-origin: center;
+  animation: typeDot 6s ease-out infinite both;
+}
+.press {
+  transform-origin: center;
+  animation: press 6s ease-in-out infinite;
+}
+.check {
+  transform-origin: center;
+  animation: checkPop 6s ease-out infinite both;
+}
+.wave {
+  animation: wave 1.6s ease-in-out infinite;
+}
+.head {
+  transform-origin: 50% 90%;
+  animation: headBob 5s ease-in-out infinite;
+}
+.blink {
+  transform-origin: center;
+  animation: blink 4.5s ease-in-out infinite;
+}
+.groundShadow {
+  transform-origin: center;
+  animation: groundShadow 5s ease-in-out infinite;
+}
+.envelope {
+  transform-origin: center;
+  animation: envelopeFly 4.8s cubic-bezier(0.4, 0, 0.3, 1) infinite both;
+}
+.sway {
+  transform-origin: 50% 100%;
+  animation: sway 4s ease-in-out infinite;
+}
+.swayAlt {
+  transform-origin: 50% 100%;
+  animation: sway 5s ease-in-out -1.5s infinite reverse;
+}
+.twinkle {
+  transform-origin: center;
+  animation: twinkle 2.4s ease-in-out infinite;
+}
+.screenGlow {
+  animation: screenGlow 3s ease-in-out infinite;
+}
+
+/* ── Keyframes ────────────────────────────────────────────────────── */
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes typeDot {
+  0% { opacity: 0; transform: scale(0); }
+  5% { opacity: 1; transform: scale(1.4); }
+  9% { transform: scale(1); }
+  82% { opacity: 1; transform: scale(1); }
+  88%, 100% { opacity: 0; transform: scale(0); }
+}
+@keyframes press {
+  0%, 46%, 60%, 100% { transform: scale(1); }
+  52% { transform: scale(0.88); }
+}
+@keyframes checkPop {
+  0%, 54% { opacity: 0; transform: scale(0); }
+  60% { opacity: 1; transform: scale(1.2); }
+  64% { transform: scale(1); }
+  86% { opacity: 1; transform: scale(1); }
+  92%, 100% { opacity: 0; transform: scale(0.6); }
+}
+@keyframes wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes headBob {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-4deg) translateY(-1px); }
+  60% { transform: rotate(2deg); }
+}
+@keyframes blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.1); }
+}
+@keyframes groundShadow {
+  0%, 100% { transform: scaleX(1); opacity: 1; }
+  50% { transform: scaleX(0.95); opacity: 0.8; }
+}
+@keyframes envelopeFly {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0deg); }
+  12% { opacity: 1; transform: translate(10px, -30px) scale(0.8) rotate(-6deg); }
+  50% { opacity: 1; transform: translate(70px, -110px) scale(1) rotate(-14deg); }
+  85% { opacity: 0.9; transform: translate(115px, -190px) scale(0.95) rotate(6deg); }
+  100% { opacity: 0; transform: translate(130px, -225px) scale(0.85) rotate(10deg); }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.5) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(45deg); }
+}
+@keyframes screenGlow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
